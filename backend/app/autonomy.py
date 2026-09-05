@@ -28,5 +28,9 @@ def more_cautious(level: str, steps: int = 1) -> str:
     return LEVELS[min(rank(level) + steps, len(LEVELS) - 1)]
 
 
+def less_cautious(level: str, steps: int = 1) -> str:
+    return LEVELS[max(rank(level) - steps, 0)]
+
+
 def max_level(a: str, b: str) -> str:
     return a if rank(a) >= rank(b) else b
