@@ -1,10 +1,33 @@
-import time
+from time import sleep
+import logging
+import os
+
+from app.db import SessionLocal
+from app.migrate import upgrade_head
+from app.sync import sync_all
+
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger("steward.worker")
+
+INTERVAL = int(os.environ.get("SYNC_INTERVAL_SEC", "45"))
 
 
 def main():
-    # Real sync loop lands once providers exist. Keep the process alive for compose.
+    upgrade_head()
+    log.info("worker up, interval=%ss", INTERVAL)
     while True:
-        time.sleep(30)
+        db = SessionLocal()
+        try:
+            n = sync_all(db)
+            db.commit()
+            if n:
+                log.info("synced %s new messages", n)
+        except Exception:
+            db.rollback()
+            log.exception("sync loop crashed")
+        finally:
+            db.close()
+        sleep(INTERVAL)
 
 
 if __name__ == "__main__":
