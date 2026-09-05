@@ -41,7 +41,7 @@ Confidence starts low. Under 0.5 the classifier bumps one step toward caution. T
 
 ## Provider interface
 
-Gmail, Outlook, IMAP/SMTP, and a fixture adapter all implement the same methods: list, archive, label, draft, send, forward, delete, unsubscribe. The agent never talks to a vendor SDK directly. `docker compose up` uses fixtures. Settings can attach a real mailbox if you put OAuth client IDs (or an IMAP app password) in `.env`.
+Gmail, Outlook, IMAP/SMTP, and a fixture adapter all implement the same methods: list, archive, label, draft, send, forward, delete, unsubscribe. The agent never talks to a vendor SDK directly. `docker compose up` uses fixtures. Settings can attach a real Gmail inbox with an App Password (IMAP). OAuth client IDs in `.env` are optional and limited to Google test users.
 
 **Trade-off:** the adapters are real code paths, not production-hardened OAuth apps. Google's verification process is out of scope. The fixture path is what a reviewer should use.
 
