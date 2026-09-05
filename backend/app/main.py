@@ -4,17 +4,25 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
+from app.db import SessionLocal
 from app.migrate import upgrade_head
 from app.routers import accounts as accounts_router
 from app.routers import analytics as analytics_router
 from app.routers import auth as auth_router
 from app.routers import mail as mail_router
 from app.routers import settings as settings_router
+from app.seed import seed_if_empty
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     upgrade_head()
+    db = SessionLocal()
+    try:
+        seed_if_empty(db)
+        db.commit()
+    finally:
+        db.close()
     yield
 
 
