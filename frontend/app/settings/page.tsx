@@ -54,7 +54,11 @@ export default function SettingsPage() {
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState("");
   const [imap, setImap] = useState(GMAIL_DEFAULTS);
-  const [extra, setExtra] = useState({ rule_type: "vip_sender", min_autonomy_level: "ask_first", label: "VIP senders" });
+  const [extra, setExtra] = useState({
+    label: "VIP senders",
+    rule_type: "",
+    min_autonomy_level: "ask_first",
+  });
 
   function load() {
     api<Settings>("/settings").then(setSettings);
@@ -143,10 +147,21 @@ export default function SettingsPage() {
 
   async function addRule(e: FormEvent) {
     e.preventDefault();
+    const match = extra.rule_type.trim().toLowerCase();
+    if (!match) {
+      setMsg("Add a sender domain, email, or action for the rule to match.");
+      return;
+    }
+    const actions = new Set(["archive", "label", "draft_reply", "unsubscribe", "none", "forward", "delete", "send"]);
     await api("/settings/safety", {
       method: "POST",
-      body: JSON.stringify({ ...extra, action_type: "*" }),
+      body: JSON.stringify({
+        ...extra,
+        rule_type: match,
+        action_type: actions.has(match) ? match : "*",
+      }),
     });
+    setExtra({ ...extra, rule_type: "" });
     load();
   }
 
@@ -325,7 +340,11 @@ export default function SettingsPage() {
 
           <section className="mt-10">
             <h2 className="text-sm font-medium">Safety floor</h2>
-            <p className="mt-1 text-xs text-ink-400">System rules cannot be lowered. You can only add stricter ones. Send, reply, and unsubscribe still ask first. Delete, forward, money, and injection still escalate.</p>
+            <p className="mt-1 text-xs text-ink-400">
+              System rules cannot be lowered. You can only add stricter ones, and they match a sender or an action, not
+              the whole inbox. Send, reply, and unsubscribe still ask first. Delete, forward, money, and injection still
+              escalate.
+            </p>
             <ul className="mt-3 divide-y divide-ink-100 rounded-lg border border-ink-200 bg-white">
               {settings?.safety_rules.map((r) => (
                 <li key={r.id} className="flex items-center justify-between px-4 py-3 text-sm">
@@ -333,6 +352,7 @@ export default function SettingsPage() {
                     <p>{r.label || r.rule_type}</p>
                     <p className="text-xs text-ink-400">
                       min {r.min_autonomy_level}
+                      {r.rule_type && !r.is_system ? ` · match ${r.rule_type}` : ""}
                       {r.is_system ? " · system" : ""}
                     </p>
                   </div>
@@ -350,7 +370,17 @@ export default function SettingsPage() {
                 <input
                   className="mt-1 block rounded-md border border-ink-200 px-2 py-1.5"
                   value={extra.label}
-                  onChange={(e) => setExtra({ ...extra, label: e.target.value, rule_type: e.target.value.toLowerCase().replace(/\s+/g, "_") })}
+                  onChange={(e) => setExtra({ ...extra, label: e.target.value })}
+                />
+              </label>
+              <label>
+                Match
+                <input
+                  required
+                  placeholder="dana@northwind.co"
+                  className="mt-1 block rounded-md border border-ink-200 px-2 py-1.5"
+                  value={extra.rule_type}
+                  onChange={(e) => setExtra({ ...extra, rule_type: e.target.value })}
                 />
               </label>
               <label>

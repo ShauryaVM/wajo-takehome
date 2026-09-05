@@ -29,7 +29,7 @@ I wanted the floor in code because prompt text is data. If the email says "ignor
 
 **Alternative:** put the floor in the system prompt and hope. Cheaper. Doesn't survive a determined body.
 
-**Trade-off:** the detector will miss novel phrasing. That's acceptable if the default for unknown outbound mail is still "ask." It is.
+**Trade-off:** the detector will miss novel phrasing. That's acceptable if the default for unknown outbound mail is still "ask." It is. User-added floors in Settings match a sender (email or domain) or an action. A VIP rule for `dana@northwind.co` does not raise the floor on Stripe receipts. A nameless catch-all is ignored.
 
 ## Preferences are few-shot, not a fine-tune
 

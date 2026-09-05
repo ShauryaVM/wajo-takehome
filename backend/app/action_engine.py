@@ -8,7 +8,7 @@ from app.classifier import Classification, classify_email
 from app.models import AgentDecision, Email, EmailAccount, SafetyRule
 from app.providers.base import SendPayload
 from app.providers.router import persist_refreshed_tokens, provider_for
-from app.safety_guard import apply_safety
+from app.safety_guard import apply_safety, user_rule_applies
 
 log = logging.getLogger("steward.actions")
 
@@ -18,13 +18,22 @@ def _addr(sender: str) -> str:
     return (m.group(1) if m else sender).strip()
 
 
-def extra_floors(db: Session, user_id: int) -> list[tuple[str, str]]:
+def extra_floors(
+    db: Session,
+    user_id: int,
+    sender: str = "",
+    action_type: str = "",
+) -> list[tuple[str, str]]:
     rows = (
         db.query(SafetyRule)
         .filter(SafetyRule.user_id == user_id, SafetyRule.is_system.is_(False))
         .all()
     )
-    return [(r.rule_type, r.min_autonomy_level) for r in rows]
+    out: list[tuple[str, str]] = []
+    for r in rows:
+        if user_rule_applies(r.rule_type, r.action_type, sender, action_type):
+            out.append((r.label or r.rule_type, r.min_autonomy_level))
+    return out
 
 
 def run_action(account: EmailAccount, email: Email, action_type: str, clf: Classification) -> dict:
@@ -78,7 +87,7 @@ def decide_and_act(
         clf,
         email.subject,
         email.body_text,
-        extra_floors=extra_floors(db, account.user_id),
+        extra_floors=extra_floors(db, account.user_id, email.sender, clf.action_type),
     )
 
     proposed = {

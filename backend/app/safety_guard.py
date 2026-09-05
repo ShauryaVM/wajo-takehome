@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 import re
 
-from app.autonomy import max_level, rank
-from app.classifier import Classification
+from app.autonomy import ACTIONS, max_level, rank
+from app.classifier import Classification, sender_domain
 
 # These are the hard floor. Preferences and prompt text cannot lower them.
 
@@ -83,6 +83,29 @@ _FORWARD = [
 
 def _search(patterns: list[str], text: str) -> bool:
     return any(re.search(p, text, flags=re.IGNORECASE | re.DOTALL) for p in patterns)
+
+
+def user_rule_applies(rule_type: str, rule_action: str, sender: str, action_type: str) -> bool:
+    key = (rule_type or "").strip().lower()
+    want_action = (rule_action or "*").strip().lower()
+    act = (action_type or "").strip().lower()
+    sender_l = (sender or "").lower()
+    domain = sender_domain(sender)
+
+    if want_action and want_action != "*" and want_action != act:
+        return False
+
+    if not key or key in {"*", "all", "any"}:
+        return bool(want_action and want_action != "*")
+
+    if key in ACTIONS:
+        return act == key
+
+    if "@" in key:
+        return key in sender_l
+    if "." in key:
+        return domain == key or domain.endswith("." + key) or key in sender_l
+    return False
 
 
 def detect_hits(subject: str, body: str, action_type: str) -> list[SafetyHit]:
