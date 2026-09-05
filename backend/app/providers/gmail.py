@@ -19,8 +19,20 @@ GMAIL_SCOPES = [
 ]
 
 
+def _expiry_naive(value: datetime | None) -> datetime | None:
+    if value is None:
+        return None
+    if value.tzinfo is not None:
+        return value.astimezone(timezone.utc).replace(tzinfo=None)
+    return value
+
+
 def creds_from_encrypted(blob: str) -> Credentials:
     data = decrypt_json(blob)
+    expiry = None
+    raw_exp = data.get("expiry")
+    if raw_exp:
+        expiry = _expiry_naive(datetime.fromisoformat(raw_exp))
     creds = Credentials(
         token=data.get("token"),
         refresh_token=data.get("refresh_token"),
@@ -28,13 +40,15 @@ def creds_from_encrypted(blob: str) -> Credentials:
         client_id=data.get("client_id") or settings.google_client_id,
         client_secret=data.get("client_secret") or settings.google_client_secret,
         scopes=data.get("scopes") or GMAIL_SCOPES,
+        expiry=expiry,
     )
-    if creds.expired and creds.refresh_token:
+    if creds.refresh_token and not creds.valid:
         creds.refresh(Request())
     return creds
 
 
 def encrypt_creds(creds: Credentials) -> str:
+    expiry = _expiry_naive(creds.expiry)
     return encrypt_json(
         {
             "token": creds.token,
@@ -43,6 +57,7 @@ def encrypt_creds(creds: Credentials) -> str:
             "client_id": creds.client_id,
             "client_secret": creds.client_secret,
             "scopes": list(creds.scopes or GMAIL_SCOPES),
+            "expiry": expiry.isoformat() if expiry else None,
         }
     )
 
@@ -81,7 +96,12 @@ class GmailProvider:
     def refreshed_blob(self) -> str:
         return encrypt_creds(self.creds)
 
-    def list_messages(self, since: datetime | None = None, limit: int = 50) -> list[FetchedMessage]:
+    def list_messages(
+        self,
+        since: datetime | None = None,
+        limit: int = 50,
+        skip_ids: set[str] | None = None,
+    ) -> list[FetchedMessage]:
         q_parts = []
         if since:
             q_parts.append(f"after:{int(since.timestamp())}")
@@ -91,6 +111,8 @@ class GmailProvider:
         resp = self.service.users().messages().list(**kwargs).execute()
         out: list[FetchedMessage] = []
         for stub in resp.get("messages") or []:
+            if skip_ids and stub.get("id") in skip_ids:
+                continue
             full = (
                 self.service.users()
                 .messages()

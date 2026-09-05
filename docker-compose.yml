@@ -37,6 +37,7 @@ services:
     environment:
       DATABASE_URL: postgresql://steward:steward@postgres:5432/steward
       REDIS_URL: redis://redis:6379/0
+      OAUTHLIB_INSECURE_TRANSPORT: "1"
     depends_on:
       postgres:
         condition: service_healthy
@@ -53,6 +54,8 @@ services:
     environment:
       DATABASE_URL: postgresql://steward:steward@postgres:5432/steward
       REDIS_URL: redis://redis:6379/0
+      OAUTHLIB_INSECURE_TRANSPORT: "1"
+      PYTHONUNBUFFERED: "1"
     depends_on:
       postgres:
         condition: service_healthy

@@ -6,6 +6,15 @@ from app.providers.imap_smtp import ImapSmtpProvider
 from app.providers.outlook import OutlookProvider
 
 
+def persist_refreshed_tokens(account: EmailAccount, provider) -> None:
+    fn = getattr(provider, "refreshed_blob", None)
+    if not callable(fn):
+        return
+    blob = fn()
+    if blob and blob != account.oauth_tokens_encrypted:
+        account.oauth_tokens_encrypted = blob
+
+
 def provider_for(account: EmailAccount) -> EmailProvider:
     if account.provider == "fixture":
         return FixtureProvider(account_email=account.email_address)

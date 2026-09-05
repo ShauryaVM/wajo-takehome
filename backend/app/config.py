@@ -29,6 +29,10 @@ class Settings(BaseSettings):
 
     cookie_name: str = "steward_session"
     session_hours: int = 24 * 14
+    sync_interval_sec: int = 45
+
+    def gmail_callback_url(self) -> str:
+        return f"{self.api_origin.rstrip('/')}/accounts/gmail/callback"
 
 
 settings = Settings()

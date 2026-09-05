@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.action_engine import approve_and_run
 from app.db import get_db
-from app.deps import current_user
+from app.deps import active_account_ids, current_user
 from app.learning import record_feedback
 from app.models import AgentDecision, Email, EmailAccount, Feedback, User
 from app.pipeline import after_new_mail
@@ -51,6 +51,10 @@ def list_emails(
     user: User = Depends(current_user),
 ):
     query = db.query(Email).filter(Email.user_id == user.id)
+    ids = active_account_ids(db, user)
+    if not ids:
+        return []
+    query = query.filter(Email.account_id.in_(ids))
     if q:
         like = f"%{q}%"
         query = query.filter((Email.subject.ilike(like)) | (Email.sender.ilike(like)))
@@ -70,6 +74,8 @@ def get_email(email_id: int, db: Session = Depends(get_db), user: User = Depends
     email = db.query(Email).filter(Email.id == email_id, Email.user_id == user.id).one_or_none()
     if email is None:
         raise HTTPException(404, "email not found")
+    if email.account_id not in active_account_ids(db, user):
+        raise HTTPException(404, "email not found")
     latest = _latest_map(db, [email.id]).get(email.id)
     base = _item(email, latest)
     return EmailDetail(
@@ -83,10 +89,13 @@ def get_email(email_id: int, db: Session = Depends(get_db), user: User = Depends
 
 @router.get("/feed", response_model=list[dict])
 def feed(db: Session = Depends(get_db), user: User = Depends(current_user), limit: int = Query(80, le=200)):
+    ids = active_account_ids(db, user)
+    if not ids:
+        return []
     rows = (
         db.query(AgentDecision, Email)
         .join(Email, Email.id == AgentDecision.email_id)
-        .filter(Email.user_id == user.id)
+        .filter(Email.user_id == user.id, Email.account_id.in_(ids))
         .order_by(AgentDecision.created_at.desc())
         .limit(limit)
         .all()
@@ -112,10 +121,17 @@ def feed(db: Session = Depends(get_db), user: User = Depends(current_user), limi
 
 @router.get("/approvals", response_model=list[dict])
 def approvals(db: Session = Depends(get_db), user: User = Depends(current_user)):
+    ids = active_account_ids(db, user)
+    if not ids:
+        return []
     rows = (
         db.query(AgentDecision, Email)
         .join(Email, Email.id == AgentDecision.email_id)
-        .filter(Email.user_id == user.id, AgentDecision.status.in_(["pending", "escalated"]))
+        .filter(
+            Email.user_id == user.id,
+            Email.account_id.in_(ids),
+            AgentDecision.status.in_(["pending", "escalated"]),
+        )
         .order_by(AgentDecision.created_at.desc())
         .all()
     )

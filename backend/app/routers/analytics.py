@@ -5,7 +5,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.deps import current_user
+from app.deps import active_account_ids, current_user
 from app.models import AgentDecision, Email, Feedback, User
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
@@ -15,11 +15,33 @@ ASKISH = {"ask_first", "escalate"}
 
 @router.get("")
 def analytics(db: Session = Depends(get_db), user: User = Depends(current_user)):
-    emails_n = db.query(func.count(Email.id)).filter(Email.user_id == user.id).scalar() or 0
+    ids = active_account_ids(db, user)
+    if not ids:
+        empty_days = []
+        now = datetime.now(timezone.utc)
+        start = now - timedelta(days=13)
+        for i in range(14):
+            day = (start + timedelta(days=i)).date()
+            empty_days.append({"day": day.isoformat(), "n": 0, "ask_rate": None})
+        return {
+            "totals": {"emails": 0, "decisions": 0, "safety_hits": 0, "overrides": 0, "pending": 0},
+            "by_level": [],
+            "by_status": [],
+            "feedback": [],
+            "accuracy": None,
+            "override_rate": None,
+            "ask_rate_by_day": empty_days,
+        }
+    emails_n = (
+        db.query(func.count(Email.id))
+        .filter(Email.user_id == user.id, Email.account_id.in_(ids))
+        .scalar()
+        or 0
+    )
     decisions = (
         db.query(AgentDecision)
         .join(Email, Email.id == AgentDecision.email_id)
-        .filter(Email.user_id == user.id)
+        .filter(Email.user_id == user.id, Email.account_id.in_(ids))
         .all()
     )
     by_level: dict[str, int] = {}
@@ -35,7 +57,7 @@ def analytics(db: Session = Depends(get_db), user: User = Depends(current_user))
         db.query(Feedback)
         .join(AgentDecision, AgentDecision.id == Feedback.decision_id)
         .join(Email, Email.id == AgentDecision.email_id)
-        .filter(Email.user_id == user.id)
+        .filter(Email.user_id == user.id, Email.account_id.in_(ids))
         .all()
     )
     fb_counts: dict[str, int] = {}

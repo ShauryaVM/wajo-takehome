@@ -57,7 +57,12 @@ class OutlookProvider:
     def _h(self) -> dict[str, str]:
         return {"Authorization": f"Bearer {self.tokens['access_token']}"}
 
-    def list_messages(self, since: datetime | None = None, limit: int = 50) -> list[FetchedMessage]:
+    def list_messages(
+        self,
+        since: datetime | None = None,
+        limit: int = 50,
+        skip_ids: set[str] | None = None,
+    ) -> list[FetchedMessage]:
         params: dict[str, str] = {
             "$top": str(min(limit, 50)),
             "$orderby": "receivedDateTime DESC",
@@ -72,6 +77,8 @@ class OutlookProvider:
             rows = r.json().get("value") or []
         out: list[FetchedMessage] = []
         for row in rows:
+            if skip_ids and row.get("id") in skip_ids:
+                continue
             frm = row.get("from") or {}
             addr = frm.get("emailAddress") or {}
             name, address = addr.get("name") or "", addr.get("address") or ""

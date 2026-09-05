@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.classifier import Classification, classify_email
 from app.models import AgentDecision, Email, EmailAccount, SafetyRule
 from app.providers.base import SendPayload
-from app.providers.router import provider_for
+from app.providers.router import persist_refreshed_tokens, provider_for
 from app.safety_guard import apply_safety
 
 log = logging.getLogger("steward.actions")
@@ -48,10 +48,10 @@ def run_action(account: EmailAccount, email: Email, action_type: str, clf: Class
         )
         result["draft_id"] = draft_id
     elif action_type in {"none", "delete", "forward", "send"}:
-        # send/delete/forward never run unattended; approve path uses create_draft or explicit send
         result["skipped"] = True
     else:
         result["skipped"] = True
+    persist_refreshed_tokens(account, provider)
     return result
 
 

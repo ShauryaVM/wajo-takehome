@@ -4,7 +4,7 @@ import logging
 from sqlalchemy.orm import Session
 
 from app.models import Email, EmailAccount
-from app.providers.router import provider_for
+from app.providers.router import persist_refreshed_tokens, provider_for
 
 log = logging.getLogger("steward.sync")
 
@@ -43,7 +43,16 @@ def upsert_message(db: Session, account: EmailAccount, msg) -> Email | None:
 
 def sync_account(db: Session, account: EmailAccount, on_new=None) -> int:
     provider = provider_for(account)
-    messages = provider.list_messages(since=account.last_sync_at, limit=50)
+    known = {
+        mid
+        for (mid,) in db.query(Email.provider_message_id).filter(Email.account_id == account.id).all()
+    }
+    first = account.last_sync_at is None
+    messages = provider.list_messages(
+        since=account.last_sync_at,
+        limit=100 if first else 50,
+        skip_ids=known,
+    )
     created = 0
     for msg in messages:
         row = upsert_message(db, account, msg)
@@ -51,12 +60,11 @@ def sync_account(db: Session, account: EmailAccount, on_new=None) -> int:
             continue
         created += 1
         if on_new:
-            on_new(db, account, row, msg)
-    refreshed = getattr(provider, "refreshed_blob", None)
-    if callable(refreshed):
-        blob = refreshed()
-        if blob and blob != account.oauth_tokens_encrypted:
-            account.oauth_tokens_encrypted = blob
+            try:
+                on_new(db, account, row, msg)
+            except Exception:
+                log.exception("classify failed for email %s", row.id)
+    persist_refreshed_tokens(account, provider)
     account.last_sync_at = datetime.now(timezone.utc)
     return created
 

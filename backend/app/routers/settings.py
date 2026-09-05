@@ -55,6 +55,11 @@ def get_settings(db: Session = Depends(get_db), user: User = Depends(current_use
         },
         "safety_rules": [SafetyRuleOut.model_validate(r).model_dump() for r in rules],
         "user": {"email": user.email},
+        "google_oauth_configured": bool(settings.google_client_id and settings.google_client_secret),
+        "microsoft_oauth_configured": bool(
+            settings.microsoft_client_id and settings.microsoft_client_secret
+        ),
+        "gmail_redirect_uri": settings.gmail_callback_url(),
     }
 
 

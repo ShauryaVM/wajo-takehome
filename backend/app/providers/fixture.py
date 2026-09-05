@@ -28,7 +28,12 @@ class FixtureProvider:
     def _state(self) -> dict:
         return _load_json(STATE_PATH, {"archived": [], "deleted": [], "labels": {}, "drafts": [], "sent": []})
 
-    def list_messages(self, since: datetime | None = None, limit: int = 50) -> list[FetchedMessage]:
+    def list_messages(
+        self,
+        since: datetime | None = None,
+        limit: int = 50,
+        skip_ids: set[str] | None = None,
+    ) -> list[FetchedMessage]:
         rows = _load_json(INBOX_PATH, [])
         state = self._state()
         hidden = set(state.get("archived", [])) | set(state.get("deleted", []))
@@ -37,6 +42,8 @@ class FixtureProvider:
         for row in rows:
             mid = row["id"]
             if mid in hidden:
+                continue
+            if skip_ids and mid in skip_ids:
                 continue
             received = datetime.fromisoformat(row["received_at"])
             if received.tzinfo is None:

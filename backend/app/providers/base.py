@@ -27,7 +27,12 @@ class SendPayload:
 
 
 class EmailProvider(Protocol):
-    def list_messages(self, since: datetime | None = None, limit: int = 50) -> list[FetchedMessage]:
+    def list_messages(
+        self,
+        since: datetime | None = None,
+        limit: int = 50,
+        skip_ids: set[str] | None = None,
+    ) -> list[FetchedMessage]:
         ...
 
     def archive(self, message_id: str) -> None:
