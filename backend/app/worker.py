@@ -4,6 +4,7 @@ import os
 
 from app.db import SessionLocal
 from app.migrate import upgrade_head
+from app.pipeline import after_new_mail
 from app.sync import sync_all
 
 logging.basicConfig(level=logging.INFO)
@@ -18,7 +19,7 @@ def main():
     while True:
         db = SessionLocal()
         try:
-            n = sync_all(db)
+            n = sync_all(db, on_new=after_new_mail)
             db.commit()
             if n:
                 log.info("synced %s new messages", n)
