@@ -107,7 +107,7 @@
     "to": ["you@local"],
     "subject": "Accepted: Lattice / Northwind 4pm (Dana Okonkwo)",
     "preview": "Dana Okonkwo accepted this event.",
-    "body": "Lattice / Northwind 4pm\nThu Sep 5, 2026 4:00pm – 4:45pm (EDT)\nGoogle Meet: meet.google.com/xkv-not-real\n\nDana Okonkwo accepted this event.\n",
+    "body": "Lattice / Northwind 4pm\nThu Sep 5, 2026 4:00pm to 4:45pm (EDT)\nGoogle Meet: meet.google.com/xkv-not-real\n\nDana Okonkwo accepted this event.\n",
     "labels": ["INBOX", "CATEGORY_UPDATES"],
     "received_at": "2026-09-05T15:03:00+00:00"
   },
