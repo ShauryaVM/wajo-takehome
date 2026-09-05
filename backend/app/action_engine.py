@@ -19,7 +19,11 @@ def _addr(sender: str) -> str:
 
 
 def extra_floors(db: Session, user_id: int) -> list[tuple[str, str]]:
-    rows = db.query(SafetyRule).filter(SafetyRule.user_id == user_id).all()
+    rows = (
+        db.query(SafetyRule)
+        .filter(SafetyRule.user_id == user_id, SafetyRule.is_system.is_(False))
+        .all()
+    )
     return [(r.rule_type, r.min_autonomy_level) for r in rows]
 
 

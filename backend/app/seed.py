@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.action_engine import decide_and_act
 from app.config import settings
 from app.learning import record_feedback
-from app.models import AgentDecision, Email, EmailAccount, Preference, User
+from app.models import AgentDecision, Email, EmailAccount, Feedback, Preference, User
 from app.routers.settings import ensure_system_rules
 
 HISTORY_START = datetime(2026, 8, 23, 9, 0, tzinfo=timezone.utc)
@@ -310,6 +310,30 @@ def _fixture_inbox(db: Session, user: User, acct: EmailAccount) -> None:
         decide_and_act(db, acct, email)
 
 
+def _repair_fixture_agent(db: Session, acct: EmailAccount) -> None:
+    # First seed applied DB system rules as global floors and escalated everything.
+    emails = (
+        db.query(Email)
+        .filter(Email.account_id == acct.id, Email.provider_message_id.like("fix-%"))
+        .all()
+    )
+    for email in emails:
+        decs = db.query(AgentDecision).filter(AgentDecision.email_id == email.id).all()
+        broken = any(
+            d.autonomy_level == "escalate" and d.safety_hit in {"send", "delete", "money"}
+            and "wire" not in (email.subject or "").lower()
+            and "delete" not in (email.subject or "").lower()
+            for d in decs
+        )
+        if not broken:
+            continue
+        for d in decs:
+            db.query(Feedback).filter(Feedback.decision_id == d.id).delete()
+            db.delete(d)
+        db.flush()
+        decide_and_act(db, acct, email)
+
+
 def _prefs(db: Session, user: User) -> None:
     wanted = [
         ("sender_domain", "morningbrew.com", "proceed_silently", 0.84, 4),
@@ -351,4 +375,5 @@ def seed_if_empty(db: Session) -> None:
     ensure_system_rules(db, user.id)
     _history(db, user, acct)
     _fixture_inbox(db, user, acct)
+    _repair_fixture_agent(db, acct)
     _prefs(db, user)
