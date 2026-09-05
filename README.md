@@ -26,11 +26,12 @@ In Settings you can connect Gmail, Outlook, or IMAP. That path needs OAuth clien
 
 ## Eval
 
+From the repo root, with backend deps installed:
+
 ```bash
-cd backend
-pip install -r requirements.txt
-cd ..
-python -m eval.run_eval
+PYTHONPATH=backend python eval/run_eval.py
 ```
 
-Results land in `eval/results/`. Design notes are in `DESIGN.md` once that file exists.
+Prints accuracy, ask-rate, and safety violations. Writes `eval/results/` and `eval/transcripts/`. Design notes: [DESIGN.md](DESIGN.md).
+
+No LLM key is required. If `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` is set, the classifier uses that instead of the heuristic. The safety guard stays the same.
