@@ -1,0 +1,40 @@
+{
+  "title": "Calibration: newsletter auto-archive",
+  "email": {
+    "sender": "Riley Cole <riley@fieldnotes.example>",
+    "subject": "studio notes #4",
+    "snippet": "Three things from the shop this week. Nothing urgent. Unsubscribe: https://fieldnotes.example/unsub\n"
+  },
+  "preferences": [
+    {
+      "pattern_type": "sender_domain",
+      "pattern_value": "fieldnotes.example",
+      "preferred_autonomy": "proceed_silently",
+      "confidence": 0.74,
+      "sample_count": 3
+    },
+    {
+      "pattern_type": "category",
+      "pattern_value": "newsletter",
+      "preferred_autonomy": "proceed_silently",
+      "confidence": 0.74,
+      "sample_count": 3
+    }
+  ],
+  "run": {
+    "id": "tr-nl",
+    "classifier_level": "proceed_silently",
+    "classifier_action": "archive",
+    "confidence": 0.74,
+    "reasoning": "Looks like promo, but I haven't seen this sender. Asking before I auto-archive. Preference on fieldnotes.example pulls toward proceed_silently.",
+    "category": "newsletter",
+    "used_llm": false,
+    "final_level": "proceed_silently",
+    "final_action": "archive",
+    "safety_hit": null,
+    "safety_reason": null,
+    "overridden": false,
+    "draft": null
+  },
+  "feedback": "good"
+}

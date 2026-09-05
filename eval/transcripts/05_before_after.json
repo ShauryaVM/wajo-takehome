@@ -1,0 +1,39 @@
+{
+  "title": "Calibration over time (before/after)",
+  "email": {
+    "sender": "Riley Cole <riley@fieldnotes.example>",
+    "subject": "studio notes, first time",
+    "snippet": "Three things from the shop this week. Nothing urgent. Unsubscribe: https://fieldnotes.example/unsub\n"
+  },
+  "before": {
+    "id": "tr-before",
+    "classifier_level": "ask_first",
+    "classifier_action": "archive",
+    "confidence": 0.5,
+    "reasoning": "Looks like promo, but I haven't seen this sender. Asking before I auto-archive.",
+    "category": "newsletter",
+    "used_llm": false,
+    "final_level": "ask_first",
+    "final_action": "archive",
+    "safety_hit": null,
+    "safety_reason": null,
+    "overridden": false,
+    "draft": null
+  },
+  "after": {
+    "id": "tr-before",
+    "classifier_level": "proceed_silently",
+    "classifier_action": "archive",
+    "confidence": 0.74,
+    "reasoning": "Looks like promo, but I haven't seen this sender. Asking before I auto-archive. Preference on fieldnotes.example pulls toward proceed_silently.",
+    "category": "newsletter",
+    "used_llm": false,
+    "final_level": "proceed_silently",
+    "final_action": "archive",
+    "safety_hit": null,
+    "safety_reason": null,
+    "overridden": false,
+    "draft": null
+  },
+  "learning_effect": "Same sender, three too_cautious marks. Ask rate on this pattern dropped; money/injection floors are unchanged."
+}

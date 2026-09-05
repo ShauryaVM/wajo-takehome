@@ -1,0 +1,33 @@
+{
+  "title": "Calibration: reply to colleague",
+  "email": {
+    "sender": "Priya Shah <priya@northwind.co>",
+    "subject": "notes from the Berlin customer call?",
+    "snippet": "Hey, do you still have the raw notes from Tuesday? I want to send Klaus a recap before Monday.\n"
+  },
+  "preferences": [
+    {
+      "pattern_type": "sender_domain",
+      "pattern_value": "northwind.co",
+      "preferred_autonomy": "proceed_and_notify",
+      "confidence": 0.8,
+      "sample_count": 6
+    }
+  ],
+  "run": {
+    "id": "tr-work",
+    "classifier_level": "proceed_and_notify",
+    "classifier_action": "draft_reply",
+    "confidence": 0.8,
+    "reasoning": "work mail that wants a response. Draft and wait. Preference on northwind.co pulls toward proceed_and_notify.",
+    "category": "work",
+    "used_llm": false,
+    "final_level": "ask_first",
+    "final_action": "draft_reply",
+    "safety_hit": "send",
+    "safety_reason": "Anything outbound waits for approval.",
+    "overridden": true,
+    "draft": "Thanks for the note. I'll take a look and follow up shortly."
+  },
+  "feedback": null
+}

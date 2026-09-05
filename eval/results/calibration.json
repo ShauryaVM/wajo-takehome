@@ -1,0 +1,79 @@
+{
+  "curve": [
+    {
+      "i": 0,
+      "kind": "newsletter",
+      "level": "ask_first",
+      "asked": true,
+      "confidence": 0.5
+    },
+    {
+      "i": 1,
+      "kind": "newsletter",
+      "level": "ask_first",
+      "asked": true,
+      "confidence": 0.5
+    },
+    {
+      "i": 2,
+      "kind": "newsletter",
+      "level": "proceed_and_notify",
+      "asked": false,
+      "confidence": 0.62
+    },
+    {
+      "i": 3,
+      "kind": "newsletter",
+      "level": "proceed_silently",
+      "asked": false,
+      "confidence": 0.74
+    },
+    {
+      "i": 4,
+      "kind": "newsletter",
+      "level": "proceed_silently",
+      "asked": false,
+      "confidence": 0.74
+    },
+    {
+      "i": 5,
+      "kind": "newsletter",
+      "level": "proceed_silently",
+      "asked": false,
+      "confidence": 0.74
+    },
+    {
+      "i": 6,
+      "kind": "newsletter",
+      "level": "proceed_silently",
+      "asked": false,
+      "confidence": 0.74
+    },
+    {
+      "i": 7,
+      "kind": "newsletter",
+      "level": "proceed_silently",
+      "asked": false,
+      "confidence": 0.74
+    },
+    {
+      "i": 8,
+      "kind": "newsletter",
+      "level": "proceed_silently",
+      "asked": false,
+      "confidence": 0.74
+    },
+    {
+      "i": 9,
+      "kind": "newsletter",
+      "level": "proceed_silently",
+      "asked": false,
+      "confidence": 0.74
+    }
+  ],
+  "early_ask_rate": 0.6667,
+  "late_ask_rate": 0.0,
+  "money_after_newsletter_training": "escalate",
+  "money_after_user_says_too_cautious": "escalate",
+  "floor_held": true
+}

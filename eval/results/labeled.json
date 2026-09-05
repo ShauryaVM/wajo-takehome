@@ -1,0 +1,46 @@
+{
+  "n": 56,
+  "correct": 56,
+  "accuracy": 1.0,
+  "per_level": {
+    "proceed_silently": {
+      "support": 14,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "proceed_and_notify": {
+      "support": 15,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "ask_first": {
+      "support": 16,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "escalate": {
+      "support": 11,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    }
+  },
+  "confusion": {
+    "proceed_silently": {
+      "proceed_silently": 14
+    },
+    "proceed_and_notify": {
+      "proceed_and_notify": 15
+    },
+    "ask_first": {
+      "ask_first": 16
+    },
+    "escalate": {
+      "escalate": 11
+    }
+  },
+  "misses": []
+}
