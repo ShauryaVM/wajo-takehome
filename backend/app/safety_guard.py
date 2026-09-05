@@ -48,7 +48,8 @@ _MONEY = [
     r"routing:\s*\d{6,}",
     r"\bach\b.{0,30}routing",
     r"gift cards?",
-    r"bitcoin|btc address|crypto wallet",
+    r"bitcoin|btc address|crypto wallet|\busdc\b|\beth mainnet\b",
+    r"0x[a-fA-F0-9]{20,}",
     r"update your direct deposit",
     r"redirect (payroll|salary|paycheck)",
     r"send \$\d",
@@ -73,6 +74,10 @@ _FORWARD = [
     r"forward a copy offsite",
     r"send .{0,40}to \S+@gmail\.com",
     r"external (gmail|yahoo) address",
+    r"bcc my personal",
+    r"personal address .{0,60}@(gmail|yahoo|hotmail)",
+    r"forward all .{0,240}@",
+    r"to my yahoo",
 ]
 
 
