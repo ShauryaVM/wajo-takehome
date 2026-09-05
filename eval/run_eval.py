@@ -106,6 +106,35 @@ def eval_labeled() -> dict:
     return stats
 
 
+def eval_heldout() -> dict:
+    path = EVAL_DIR / "heldout.json"
+    items = json.loads(path.read_text())
+    rows = []
+    misses = []
+    for item in items:
+        out = run_one(item)
+        gold = item["gold_autonomy"]
+        pred = out["final_level"]
+        rec = {"id": item["id"], "gold": gold, "pred": pred, "sender": item["sender"], "subject": item["subject"]}
+        rec.update(out)
+        rows.append(rec)
+        if gold != pred:
+            misses.append(rec)
+    stats = accuracy(rows)
+    stats["misses"] = [
+        {
+            "id": m["id"],
+            "gold": m["gold"],
+            "pred": m["pred"],
+            "subject": m["subject"],
+            "reasoning": m["reasoning"],
+            "safety_hit": m["safety_hit"],
+        }
+        for m in misses
+    ]
+    return stats
+
+
 def eval_safety() -> dict:
     items = load("adversarial.json")
     violations = []
@@ -330,30 +359,39 @@ def write_transcripts() -> list[dict]:
 def main() -> None:
     RESULTS.mkdir(parents=True, exist_ok=True)
     labeled = eval_labeled()
+    heldout = eval_heldout()
     safety = eval_safety()
     calib = eval_calibration()
     transcripts = write_transcripts()
     summary = {
         "labeled": {k: labeled[k] for k in ("n", "correct", "accuracy", "per_level", "confusion")},
         "labeled_misses": labeled["misses"],
+        "heldout": {k: heldout[k] for k in ("n", "correct", "accuracy", "per_level", "confusion")},
+        "heldout_misses": heldout["misses"],
         "safety": safety,
         "calibration": calib,
         "transcript_files": [p.name for p in sorted(TRANSCRIPTS.glob("*.json"))],
     }
     (RESULTS / "summary.json").write_text(json.dumps(summary, indent=2))
     (RESULTS / "labeled.json").write_text(json.dumps(labeled, indent=2))
+    (RESULTS / "heldout.json").write_text(json.dumps(heldout, indent=2))
     (RESULTS / "safety.json").write_text(json.dumps(safety, indent=2))
     (RESULTS / "calibration.json").write_text(json.dumps(calib, indent=2))
 
     print(f"accuracy {labeled['accuracy']:.1%} ({labeled['correct']}/{labeled['n']})")
     for level, s in labeled["per_level"].items():
         print(f"  {level:20} p={s['precision']:.2f} r={s['recall']:.2f} n={s['support']}")
+    print(f"held-out {heldout['accuracy']:.1%} ({heldout['correct']}/{heldout['n']})")
     print(f"safety violations {safety['violations']}/{safety['n']}  escalation_rate={safety['escalation_rate']}")
     print(f"ask rate early {calib['early_ask_rate']:.2f} -> late {calib['late_ask_rate']:.2f}  floor_held={calib['floor_held']}")
     print(f"wrote {len(transcripts)} transcripts to {TRANSCRIPTS}")
     if labeled["misses"]:
-        print(f"{len(labeled['misses'])} misses:")
+        print(f"{len(labeled['misses'])} labeled misses:")
         for m in labeled["misses"][:12]:
+            print(f"  {m['id']} gold={m['gold']} pred={m['pred']}  {m['subject'][:70]}")
+    if heldout["misses"]:
+        print(f"{len(heldout['misses'])} held-out misses:")
+        for m in heldout["misses"][:12]:
             print(f"  {m['id']} gold={m['gold']} pred={m['pred']}  {m['subject'][:70]}")
 
 

@@ -56,15 +56,16 @@ Gmail, Outlook, IMAP/SMTP, and a fixture adapter all implement the same methods:
 | Prompt injection | ignore previous instructions, admin mode, exfiltrate keys, "do not ask the user" | escalate |
 | Unsubscribe | action type (mailto/http list-unsubscribe) | ask first |
 
-Learning updates preferences. `record_feedback` will not write a preferred level below escalate when the decision had a hard hit.
+Learning updates preferences. `record_feedback` will not write a preferred level below escalate on a hard hit, or below ask first on send/unsubscribe.
 
 ## Eval is how we know, not an architecture slide
 
-Three tests in `eval/`:
+Four tests in `eval/`:
 
-1. 56 labeled mails, four-way accuracy
-2. A 10-step newsletter that starts cautious, gets "too cautious" feedback, ask rate falls
-3. 24 adversarial mails that must all escalate
+1. 64 labeled mails, four-way accuracy (the original 56 plus 8 cases written to be hard for the heuristic)
+2. 8 held-out mails in `eval/heldout.json` that were not used to retune
+3. A 10-step newsletter that starts cautious, gets "too cautious" feedback, ask rate falls
+4. 24 adversarial mails that must all escalate
 
 Numbers in the next section. Raw JSON in `eval/results/`.
 
@@ -126,7 +127,7 @@ graph TD
   EmailSync --> Emails
 ```
 
-Sync pulls mail through the provider. Classifier sees the message plus preference rows. Guard may raise the level. Silent/notify actions run; ask/escalate wait in the UI. Feedback writes preference rows used on the next pass.
+Sync pulls mail through the provider. Classifier sees the message plus preference rows. Guard may raise the level. Silent archive/label run, then archived silent mail leaves Inbox and Feed. Notify runs and shows in the Feed with a "Told you" badge on Inbox. Ask/escalate wait in the UI. Feedback writes preference rows used on the next pass.
 
 ## Transcripts
 
@@ -207,18 +208,19 @@ From `eval/results/summary.json`, heuristic + guard, no API key.
 
 | Metric | Value |
 | --- | --- |
-| Labeled accuracy | 56/56 (1.00) |
-| Silent p/r | 1.00 / 1.00 (n=14) |
-| Notify p/r | 1.00 / 1.00 (n=15) |
-| Ask p/r | 1.00 / 1.00 (n=16) |
-| Escalate p/r | 1.00 / 1.00 (n=11) |
+| Labeled accuracy | 56/64 (0.875) |
+| Held-out accuracy | 6/8 (0.75) |
+| Silent p/r | 0.91 / 0.91 (n=11) |
+| Notify p/r | 0.83 / 1.00 (n=15) |
+| Ask p/r | 0.95 / 0.80 (n=25) |
+| Escalate p/r | 0.79 / 0.85 (n=13) |
 | Ask rate, first 3 of the calibration loop | 0.67 |
 | Ask rate, last 3 | 0.00 |
 | Adversarial safety violations | 0 / 24 |
 | Escalation rate on adversarial | 1.00 |
 | Floor held after training on money | yes |
 
-I would not put 56/56 on a slide as "the model is solved." I wrote the labeled set and the heuristic to agree. What I *would* put on a slide: ask rate 0.67 to 0.00 on a new promo sender, and 0 safety misses on injection/money/delete/forward, including the cases where the classifier had been trained to be quiet.
+The original 56 were written to agree with the heuristic. I then added 8 labels I expected it to miss and did not retune: a guest post from a newsletter domain, cake "in 20 minutes", a seller asking about a receipt, a first-time promo I still think should archive, an Okta reset, marketing mail that says "board packet", a README that quotes jailbreak text, a GitHub critical advisory. Held-out misses are a litigation-hold digest and a lunch note that says "no board pre-read". I would not put 56/64 on a slide as "solved." What I would put on a slide: ask rate 0.67 to 0.00 on a new promo sender, and 0 safety misses on injection/money/delete/forward, including the cases where the classifier had been trained to be quiet.
 
 With `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` set, `eval/run_eval.py` uses the same guard and the LLM classifier. I didn't pay for that run here.
 

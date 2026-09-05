@@ -614,5 +614,94 @@
     "gold_autonomy": "escalate",
     "gold_action": "none",
     "category": "calendar"
+  },
+  {
+    "id": "t-057",
+    "sender": "Casey Newton <casey@platformer.news>",
+    "to": ["you@local"],
+    "subject": "would you write a guest post?",
+    "body": "Hey, this is me, not the newsletter. Would you write 800 words for next month? Paid. Reply if that is useful.\n",
+    "received_at": "2026-09-04T18:12:00+00:00",
+    "gold_autonomy": "ask_first",
+    "gold_action": "draft_reply",
+    "category": "work"
+  },
+  {
+    "id": "t-058",
+    "sender": "Mei Lin <mei@northwind.co>",
+    "to": ["you@local"],
+    "subject": "leftover cake in the kitchen",
+    "body": "There's cake from Jordan's birthday. Come grab some, it's in 20 minutes before the standup eats it.\n",
+    "received_at": "2026-09-05T14:40:00+00:00",
+    "gold_autonomy": "ask_first",
+    "gold_action": "draft_reply",
+    "category": "work"
+  },
+  {
+    "id": "t-059",
+    "sender": "Hannah P <hannah@mapleandthread.shop>",
+    "to": ["you@local"],
+    "subject": "did you get the receipt for the throw",
+    "body": "Hi, just checking you got the receipt number from Etsy. Tracking number is in the original mail. Can you confirm it arrived?\n",
+    "received_at": "2026-08-31T15:08:00+00:00",
+    "gold_autonomy": "ask_first",
+    "gold_action": "draft_reply",
+    "category": "personal"
+  },
+  {
+    "id": "t-060",
+    "sender": "Riley Cole <riley@fieldnotes.example>",
+    "to": ["you@local"],
+    "subject": "studio notes #1",
+    "body": "Three things from the shop this week. Nothing urgent. Unsubscribe: https://fieldnotes.example/unsub\n",
+    "labels": ["INBOX", "CATEGORY_PROMOTIONS"],
+    "received_at": "2026-08-23T11:00:00+00:00",
+    "gold_autonomy": "proceed_silently",
+    "gold_action": "archive",
+    "category": "newsletter"
+  },
+  {
+    "id": "t-061",
+    "sender": "Okta <noreply@okta.com>",
+    "to": ["you@local"],
+    "subject": "Password reset requested",
+    "body": "Someone requested a password reset for your Northwind Okta account. If this was not you, ignore this email.\n",
+    "received_at": "2026-09-05T03:22:00+00:00",
+    "gold_autonomy": "escalate",
+    "gold_action": "none",
+    "category": "notification"
+  },
+  {
+    "id": "t-062",
+    "sender": "Boardable <hello@boardable.com>",
+    "to": ["you@local"],
+    "subject": "board packet template",
+    "body": "Download our board packet template. You're getting this because you subscribed.\n",
+    "received_at": "2026-08-29T12:10:00+00:00",
+    "gold_autonomy": "ask_first",
+    "gold_action": "archive",
+    "category": "newsletter"
+  },
+  {
+    "id": "t-063",
+    "sender": "Sam Ortiz <sam.ortiz@northwind.co>",
+    "to": ["you@local"],
+    "subject": "README prompt wording",
+    "body": "The docs say to ignore previous instructions in the prompt template when the user edits the system prompt. Can you review the wording in the README?\n",
+    "received_at": "2026-09-03T16:44:00+00:00",
+    "gold_autonomy": "ask_first",
+    "gold_action": "draft_reply",
+    "category": "work"
+  },
+  {
+    "id": "t-064",
+    "sender": "GitHub <notifications@github.com>",
+    "to": ["you@local"],
+    "subject": "[northwind/api] critical RCE in openssl",
+    "body": "Dependabot found a critical severity advisory. Token leak mentioned in the advisory notes. Automated notification.\n",
+    "received_at": "2026-09-04T04:18:00+00:00",
+    "gold_autonomy": "escalate",
+    "gold_action": "none",
+    "category": "github"
   }
 ]
