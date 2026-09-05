@@ -43,6 +43,16 @@ def _item(email: Email, decision: AgentDecision | None) -> EmailListItem:
     )
 
 
+def _quiet_archive(decision: AgentDecision | None) -> bool:
+    if decision is None:
+        return False
+    return (
+        decision.autonomy_level == "proceed_silently"
+        and decision.status == "executed"
+        and decision.action_type == "archive"
+    )
+
+
 @router.get("/emails", response_model=list[EmailListItem])
 def list_emails(
     q: str = "",
@@ -64,6 +74,8 @@ def list_emails(
     for e in rows:
         d = latest.get(e.id)
         if status and (d is None or d.status != status):
+            continue
+        if _quiet_archive(d):
             continue
         items.append(_item(e, d))
     return items
@@ -95,7 +107,11 @@ def feed(db: Session = Depends(get_db), user: User = Depends(current_user), limi
     rows = (
         db.query(AgentDecision, Email)
         .join(Email, Email.id == AgentDecision.email_id)
-        .filter(Email.user_id == user.id, Email.account_id.in_(ids))
+        .filter(
+            Email.user_id == user.id,
+            Email.account_id.in_(ids),
+            AgentDecision.autonomy_level != "proceed_silently",
+        )
         .order_by(AgentDecision.created_at.desc())
         .limit(limit)
         .all()

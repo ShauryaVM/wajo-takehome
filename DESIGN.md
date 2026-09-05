@@ -15,7 +15,7 @@ So the levels are:
 - **ask first**: draft or propose, wait
 - **escalate**: stop, flag it, human now
 
-Silent vs notify is a UX split. Ask vs escalate is an urgency split. I would not collapse them.
+Silent vs notify is a UX split. Ask vs escalate is an urgency split. I would not collapse them. Silent archives run and then disappear from Inbox and Feed. Notify archives/labels run and show up in the Feed as something the agent did, with a "Told you" badge still on Inbox. Analytics still counts both.
 
 **Alternative:** a single confidence threshold that maps onto notify/ask. Easier to tune, worse to explain in the UI, and it hides the "this is actually on fire" case inside a low number.
 

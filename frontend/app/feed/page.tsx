@@ -28,7 +28,7 @@ export default function FeedPage() {
       <div className="h-screen overflow-y-auto">
         <div className="mx-auto max-w-2xl px-8 py-8">
           <h1 className="font-serif text-2xl">Agent feed</h1>
-          <p className="mt-1 text-sm text-ink-500">Everything it did, tried, or flagged.</p>
+          <p className="mt-1 text-sm text-ink-500">What it did and told you about, plus asks and flags. Silent work stays off this list.</p>
           <ol className="mt-8 space-y-4">
             {items === null ? <p className="text-sm text-ink-400">Loading...</p> : null}
             {items?.length === 0 ? <p className="text-sm text-ink-400">No decisions yet.</p> : null}
