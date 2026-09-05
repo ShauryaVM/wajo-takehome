@@ -12,6 +12,7 @@ router = APIRouter(prefix="/settings", tags=["settings"])
 
 SYSTEM_RULES = [
     ("send", "send", "ask_first", "Outbound mail waits for approval"),
+    ("unsubscribe", "unsubscribe", "ask_first", "Unsubscribe waits for approval"),
     ("delete", "delete", "escalate", "Deletion always escalates"),
     ("forward_external", "forward", "escalate", "Forwarding outside the tenant escalates"),
     ("money", "*", "escalate", "Payment or wire requests escalate"),

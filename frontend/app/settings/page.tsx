@@ -325,7 +325,7 @@ export default function SettingsPage() {
 
           <section className="mt-10">
             <h2 className="text-sm font-medium">Safety floor</h2>
-            <p className="mt-1 text-xs text-ink-400">System rules cannot be lowered. You can only add stricter ones. Send/reply still ask first. Delete, forward, money, and injection still escalate.</p>
+            <p className="mt-1 text-xs text-ink-400">System rules cannot be lowered. You can only add stricter ones. Send, reply, and unsubscribe still ask first. Delete, forward, money, and injection still escalate.</p>
             <ul className="mt-3 divide-y divide-ink-100 rounded-lg border border-ink-200 bg-white">
               {settings?.safety_rules.map((r) => (
                 <li key={r.id} className="flex items-center justify-between px-4 py-3 text-sm">

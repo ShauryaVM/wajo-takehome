@@ -51,7 +51,7 @@
     "body": "A few things shipped while you were in meetings.\n\nStamps work on mobile now. Timers don't reset when someone joins late. The toolbar hides if you haven't touched it in 8 seconds, which annoyed half the team here and the other half asked for it.\n\nRead the notes: https://www.figma.com/blog\n\nManage email prefs or unsubscribe here.\n",
     "received_at": "2026-08-27T18:02:00+00:00",
     "gold_autonomy": "proceed_silently",
-    "gold_action": "unsubscribe",
+    "gold_action": "archive",
     "category": "newsletter"
   },
   {
@@ -61,7 +61,7 @@
     "subject": "Extra 25% off the stuff already on sale",
     "body": "Anniversary sale leftovers. Extra 25% through Sunday on marked-down shoes and bags.\n\nCode is already applied if you click through. If you don't, we'll send this again on Saturday, because of course we will.\n\nUnsubscribe from sale mail: https://www.nordstrom.com/unsub\n",
     "received_at": "2026-08-20T13:15:00+00:00",
-    "gold_autonomy": "proceed_silently",
+    "gold_autonomy": "ask_first",
     "gold_action": "unsubscribe",
     "category": "newsletter"
   },
@@ -94,7 +94,7 @@
     "subject": "CFP closes Friday (you said you might speak)",
     "body": "You started a speaker application in May and never finished it. The CFP closes Friday at 17:00 WEST.\n\nIf you don't want these, unsubscribe. A lot of people don't.\n\nhttps://websummit.com/unsub\n",
     "received_at": "2026-08-25T09:33:00+00:00",
-    "gold_autonomy": "proceed_silently",
+    "gold_autonomy": "ask_first",
     "gold_action": "unsubscribe",
     "category": "newsletter"
   },
@@ -116,7 +116,7 @@
     "subject": "MileagePlus: 2x miles to Chicago through Sep 20",
     "body": "Book a round trip to ORD by Sep 20 and we'll throw extra miles at it. Same fare you already see.\n\nThis is a promo. It is not a ticket. It is not a change to an existing reservation.\n\nUnsubscribe from MileagePlus offers: https://www.united.com/emailprefs\n",
     "received_at": "2026-08-18T20:05:00+00:00",
-    "gold_autonomy": "proceed_silently",
+    "gold_autonomy": "ask_first",
     "gold_action": "unsubscribe",
     "category": "newsletter"
   },
@@ -149,8 +149,8 @@
     "subject": "Join us Thursday: inbound metrics that actually moved pipeline",
     "body": "Live webinar, Thursday Sep 10 at 1pm ET. Three marketers, 40 minutes, a Q&A if people stay.\n\nThere's a calendar file on the landing page if you want it. This is a marketing event, not a meeting with your team.\n\nIf this isn't useful, unsubscribe and we'll stop.\n",
     "received_at": "2026-09-01T19:47:00+00:00",
-    "gold_autonomy": "proceed_silently",
-    "gold_action": "archive",
+    "gold_autonomy": "ask_first",
+    "gold_action": "unsubscribe",
     "category": "newsletter"
   },
   {

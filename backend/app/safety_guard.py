@@ -128,6 +128,14 @@ def detect_hits(subject: str, body: str, action_type: str) -> list[SafetyHit]:
                 "Anything outbound waits for approval.",
             )
         )
+    if action_type == "unsubscribe":
+        hits.append(
+            SafetyHit(
+                "unsubscribe",
+                "ask_first",
+                "Unsubscribe sends mail off-box. Wait for approval.",
+            )
+        )
     return hits
 
 
@@ -142,7 +150,7 @@ def apply_safety(
     strongest: SafetyHit | None = None
     for h in hits:
         floor = max_level(floor, h.floor)
-        if h.name == "send":
+        if h.name in {"send", "unsubscribe"}:
             continue
         if strongest is None or rank(h.floor) >= rank(strongest.floor):
             strongest = h
@@ -154,8 +162,10 @@ def apply_safety(
             strongest = SafetyHit(name, min_level, f"User safety rule '{name}' raised the floor.")
 
     if rank("ask_first") > rank(classification.autonomy_level) and rank(floor) >= rank("ask_first"):
-        if strongest is None and any(h.name == "send" for h in hits):
-            strongest = next(h for h in hits if h.name == "send")
+        if strongest is None:
+            ask_hit = next((h for h in hits if h.name in {"send", "unsubscribe"}), None)
+            if ask_hit:
+                strongest = ask_hit
 
     action = classification.action_type
     if floor == "escalate":

@@ -10,6 +10,7 @@ ACTIONS = ("archive", "label", "draft_reply", "unsubscribe", "none", "forward", 
 SYSTEM_FLOORS = {
     "send": "ask_first",
     "draft_reply": "ask_first",
+    "unsubscribe": "ask_first",
     "delete": "escalate",
     "forward": "escalate",
     "money": "escalate",

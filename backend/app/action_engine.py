@@ -105,7 +105,7 @@ def decide_and_act(
     db.flush()
 
     if guarded.autonomy_level in {"proceed_silently", "proceed_and_notify"}:
-        if guarded.action_type in {"archive", "label", "unsubscribe"}:
+        if guarded.action_type in {"archive", "label"}:
             try:
                 result = run_action(account, email, guarded.action_type, clf)
                 proposed.update(result)

@@ -7,6 +7,8 @@ from app.classifier import guess_category, sender_domain
 from app.models import AgentDecision, Email, Feedback, Preference
 
 HARD_HITS = {"money", "prompt_injection", "delete", "forward_external"}
+ASK_FLOOR_HITS = {"send", "unsubscribe"}
+ASK_FLOOR_ACTIONS = {"send", "draft_reply", "unsubscribe"}
 
 
 def _target_level(decision: AgentDecision, feedback_type: str, corrected: str | None) -> str:
@@ -21,8 +23,12 @@ def _target_level(decision: AgentDecision, feedback_type: str, corrected: str | 
         if corrected:
             target = corrected
 
-    if decision.safety_hit in HARD_HITS and rank(target) < rank("escalate"):
-        target = "escalate"
+    if decision.safety_hit in HARD_HITS or decision.action_type in {"delete", "forward"}:
+        if rank(target) < rank("escalate"):
+            target = "escalate"
+    elif decision.safety_hit in ASK_FLOOR_HITS or decision.action_type in ASK_FLOOR_ACTIONS:
+        if rank(target) < rank("ask_first"):
+            target = "ask_first"
     return target
 
 

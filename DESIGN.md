@@ -54,6 +54,7 @@ Gmail, Outlook, IMAP/SMTP, and a fixture adapter all implement the same methods:
 | Forward off-tenant | bcc/forward to gmail/yahoo, "personal address", "customer list" | escalate |
 | Money | wire, routing numbers, USDC/0x wallets, gift cards, payroll redirect | escalate |
 | Prompt injection | ignore previous instructions, admin mode, exfiltrate keys, "do not ask the user" | escalate |
+| Unsubscribe | action type (mailto/http list-unsubscribe) | ask first |
 
 Learning updates preferences. `record_feedback` will not write a preferred level below escalate when the decision had a hard hit.
 
