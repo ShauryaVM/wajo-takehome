@@ -21,23 +21,6 @@ class DecisionOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class EmailListItem(BaseModel):
-    id: int
-    subject: str
-    sender: str
-    preview: str
-    received_at: datetime
-    labels: list[Any]
-    decision: DecisionOut | None = None
-
-
-class EmailDetail(EmailListItem):
-    body_text: str
-    to_addresses: list[Any]
-    account_id: int
-    provider_message_id: str
-
-
 class FeedbackIn(BaseModel):
     feedback_type: str
     corrected_autonomy_level: str | None = None
@@ -53,6 +36,24 @@ class FeedbackOut(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class EmailListItem(BaseModel):
+    id: int
+    subject: str
+    sender: str
+    preview: str
+    received_at: datetime
+    labels: list[Any]
+    decision: DecisionOut | None = None
+
+
+class EmailDetail(EmailListItem):
+    body_text: str
+    to_addresses: list[Any]
+    account_id: int
+    provider_message_id: str
+    feedback: list[FeedbackOut] = []
 
 
 class AccountOut(BaseModel):

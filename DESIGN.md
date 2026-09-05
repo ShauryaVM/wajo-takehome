@@ -37,7 +37,7 @@ Each feedback event updates a row keyed by `sender_domain` or `category`: prefer
 
 Fine-tuning a per-user model is the "real ML" version. It also means a training loop, a delay, and no way to point at the row that caused today's archive. Immediate, inspectable, slightly crude. Fine for one mailbox.
 
-Confidence starts low. Under 0.5 the classifier bumps one step toward caution. That's how it earns autonomy instead of assuming it.
+Confidence starts low. Under 0.5 the classifier bumps one step toward caution. That's how it earns autonomy instead of assuming it. A preference only becomes `proceed_silently` after three hits on that sender domain (five if it is a category key) and confidence at least 0.7. One "too cautious" on a receipt cannot hide the next newsletter. Category rows cannot be written all the way to silent from a single sender's feedback.
 
 ## Provider interface
 

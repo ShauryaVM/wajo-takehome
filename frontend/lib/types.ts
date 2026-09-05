@@ -34,6 +34,7 @@ export type EmailDetail = EmailListItem & {
   to_addresses: string[];
   account_id: number;
   provider_message_id: string;
+  feedback?: { id: number; feedback_type: string; user_comment: string | null; created_at: string }[];
 };
 
 export type FeedItem = {

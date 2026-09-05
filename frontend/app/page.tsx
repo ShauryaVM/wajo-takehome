@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
 import DecisionBadge from "@/components/DecisionBadge";
+import FeedbackButtons from "@/components/FeedbackButtons";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import type { EmailDetail, EmailListItem } from "@/lib/types";
@@ -109,7 +110,7 @@ export default function InboxPage() {
               <pre className="mt-8 whitespace-pre-wrap font-sans text-sm leading-6 text-ink-800">
                 {selected.body_text}
               </pre>
-              {selected.decision ? (
+                  {selected.decision ? (
                 <section className="mt-10 rounded-lg border border-ink-200 bg-ink-50 p-4">
                   <p className="text-xs uppercase tracking-wide text-ink-400">Agent</p>
                   <p className="mt-2 text-sm text-ink-800">{selected.decision.reasoning}</p>
@@ -131,6 +132,13 @@ export default function InboxPage() {
                       <p className="mt-1 whitespace-pre-wrap">{String(selected.decision.proposed_action.draft)}</p>
                     </div>
                   ) : null}
+                  <div className="mt-3">
+                    <FeedbackButtons
+                      decisionId={selected.decision.id}
+                      existing={(selected.feedback || []).map((f) => f.feedback_type)}
+                      onDone={() => open(selected.id)}
+                    />
+                  </div>
                 </section>
               ) : null}
             </article>

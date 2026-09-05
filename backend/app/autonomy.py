@@ -35,3 +35,18 @@ def less_cautious(level: str, steps: int = 1) -> str:
 
 def max_level(a: str, b: str) -> str:
     return a if rank(a) >= rank(b) else b
+
+
+def effective_preference_level(pref: dict) -> str:
+    preferred = pref.get("preferred_autonomy") or "ask_first"
+    if preferred not in LEVELS:
+        preferred = "ask_first"
+    if preferred != "proceed_silently":
+        return preferred
+    n = int(pref.get("sample_count") or 0)
+    conf = float(pref.get("confidence") or 0)
+    ptype = pref.get("pattern_type") or ""
+    need = 3 if ptype == "sender_domain" else 5
+    if n < need or conf < 0.7:
+        return "proceed_and_notify"
+    return preferred

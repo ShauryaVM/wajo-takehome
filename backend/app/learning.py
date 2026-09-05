@@ -92,7 +92,8 @@ def record_feedback(
         email.sender, email.subject, email.body_text, list(email.labels or [])
     )
     _upsert_pref(db, email.user_id, "sender_domain", domain, target, good)
-    _upsert_pref(db, email.user_id, "category", category, target, good)
+    cat_target = "proceed_and_notify" if target == "proceed_silently" else target
+    _upsert_pref(db, email.user_id, "category", category, cat_target, good)
     db.flush()
     return fb
 

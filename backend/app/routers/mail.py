@@ -90,12 +90,16 @@ def get_email(email_id: int, db: Session = Depends(get_db), user: User = Depends
         raise HTTPException(404, "email not found")
     latest = _latest_map(db, [email.id]).get(email.id)
     base = _item(email, latest)
+    fbs = []
+    if latest:
+        fbs = db.query(Feedback).filter(Feedback.decision_id == latest.id).all()
     return EmailDetail(
         **base.model_dump(),
         body_text=email.body_text,
         to_addresses=list(email.to_addresses or []),
         account_id=email.account_id,
         provider_message_id=email.provider_message_id,
+        feedback=[FeedbackOut.model_validate(f) for f in fbs],
     )
 
 

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import re
 
-from app.autonomy import max_level, more_cautious
+from app.autonomy import effective_preference_level, max_level, more_cautious
 from app.llm_router import LlmUnavailable, complete_decision, llm_configured
 
 SYSTEM_PROMPT = """You pick how autonomously an email agent should act for one message.
@@ -228,7 +228,7 @@ def heuristic_classify(
 
     pref = _best_pref(preferences or [], domain, category)
     if pref and pref.get("confidence", 0) >= 0.55 and not _urgent(blob, subject, sender):
-        preferred = pref["preferred_autonomy"]
+        preferred = effective_preference_level(pref)
         if preferred != level:
             why += f" Preference on {pref.get('pattern_value')} pulls toward {preferred}."
             level = preferred
