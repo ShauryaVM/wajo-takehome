@@ -5,7 +5,11 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.migrate import upgrade_head
+from app.routers import accounts as accounts_router
+from app.routers import analytics as analytics_router
 from app.routers import auth as auth_router
+from app.routers import mail as mail_router
+from app.routers import settings as settings_router
 
 
 @asynccontextmanager
@@ -25,6 +29,10 @@ app.add_middleware(
 )
 
 app.include_router(auth_router.router)
+app.include_router(mail_router.router)
+app.include_router(accounts_router.router)
+app.include_router(settings_router.router)
+app.include_router(analytics_router.router)
 
 
 @app.get("/health")
