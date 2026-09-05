@@ -56,7 +56,15 @@ def guess_category(sender: str, subject: str, body: str, labels: list[str] | Non
         return "github"
     if "calendar" in domain or "calendar-notification" in sender.lower():
         return "calendar"
-    if local.startswith("receipt") or "shipment-tracking" in sender.lower() or "this is not a bill" in blob:
+    if (
+        local.startswith("receipt")
+        or "receipts@" in sender.lower()
+        or "transaction@" in sender.lower()
+        or "shipment-tracking" in sender.lower()
+        or "this is not a bill" in blob
+        or "invoice available" in blob
+        or (subject or "").lower().startswith("receipt ")
+    ):
         return "receipt"
     if any(k in blob for k in ("paid $", "receipt number", "tracking number", "out for delivery")):
         return "receipt"
@@ -64,13 +72,17 @@ def guess_category(sender: str, subject: str, body: str, labels: list[str] | Non
         return "newsletter"
     if "CATEGORY_PROMOTIONS" in labels:
         return "newsletter"
-    if any(k in blob for k in ("unsubscribe", "manage email pref", "you're getting this because", "you subscribed", "turn off these emails", "turn these emails off")):
+    if any(k in blob for k in ("unsubscribe", "manage email pref", "you're getting this because", "you subscribed", "turn off these emails", "turn these emails off", "reply stop", "want off this list")):
         if any(k in local for k in ("no-reply", "noreply", "news", "hello", "crew", "updates", "mailer", "email", "jobs-noreply")):
             return "newsletter"
         prefix = domain.split(".")[0]
         if prefix in {"email", "mail", "news"}:
             return "newsletter"
     if any(k in domain for k in ("slack.com", "linear.app", "zoom.us", "adp.com")):
+        return "notification"
+    if "comments-noreply@" in sender.lower() or (
+        "docs.google.com" in blob and "noreply" in sender.lower()
+    ):
         return "notification"
     if "notifications@" in sender.lower() or local in {"no-reply", "noreply", "notifications"}:
         if "github" not in domain:
@@ -98,7 +110,26 @@ def guess_category(sender: str, subject: str, body: str, labels: list[str] | Non
     return "other"
 
 
-def _urgent(blob: str, subject: str) -> bool:
+def _familiar_promo(sender: str) -> bool:
+    domain = sender_domain(sender)
+    local = sender_local(sender)
+    if any(k in domain for k in ("substack", "morningbrew", "theverge", "producthunt", "platformer")):
+        return True
+    if any(
+        k in local
+        for k in ("no-reply", "noreply", "news", "hello", "crew", "updates", "mailer", "email", "jobs-noreply")
+    ):
+        return True
+    prefix = domain.split(".")[0]
+    return prefix in {"email", "mail", "news"}
+
+
+def _urgent(blob: str, subject: str, sender: str = "") -> bool:
+    low_sender = (sender or "").lower()
+    if "calendar-notification@" in low_sender or "comments-noreply@" in low_sender:
+        return False
+    if "github.com" in sender_domain(sender) and "notifications@" in low_sender:
+        return False
     needles = (
         "need you on the",
         "paging you",
@@ -106,6 +137,8 @@ def _urgent(blob: str, subject: str) -> bool:
         "litigation hold",
         "legal hold",
         "board packet",
+        "board pre-read",
+        "call my cell",
         "declined to comment",
         "reporter",
         "in 20 minutes",
@@ -125,9 +158,11 @@ def _urgent(blob: str, subject: str) -> bool:
     subj = (subject or "").lower()
     if "need you on the" in subj or "paging" in subj:
         return True
-    if re.search(r"\bin \d+ minutes\b", blob):
+    if re.search(r"\bin \d+ minutes\b", blob) and "calendar-notification@" not in low_sender:
         return True
     if "by 10am" in blob or "by 5pm" in blob or "today we pause" in blob:
+        return True
+    if "board pre-read" in blob or "call my cell" in blob:
         return True
     return False
 
@@ -144,7 +179,7 @@ def heuristic_classify(
     category = guess_category(sender, subject, body, labels)
     domain = sender_domain(sender)
 
-    if _urgent(blob, subject):
+    if _urgent(blob, subject, sender):
         return Classification(
             autonomy_level="escalate",
             confidence=0.86,
@@ -164,13 +199,18 @@ def heuristic_classify(
     label = None
 
     if category == "newsletter":
-        level, action, conf = "proceed_silently", "archive", 0.78
-        why = "Promotional or newsletter mail. Archiving is the default."
+        if _familiar_promo(sender):
+            level, action, conf = "proceed_silently", "archive", 0.78
+            why = "Promotional or newsletter mail. Archiving is the default."
+        else:
+            level, action, conf = "ask_first", "archive", 0.5
+            why = "Looks like promo, but I haven't seen this sender. Asking before I auto-archive."
         draft = None
         if list_unsubscribe or "unsubscribe" in blob:
             if any(k in blob for k in ("sale", "off the stuff", "webinar", "cfp closes", "mileageplus")):
                 action = "unsubscribe"
-                why = "Promo with an unsubscribe path. I'll use it rather than just archive."
+                if _familiar_promo(sender):
+                    why = "Promo with an unsubscribe path. I'll use it rather than just archive."
     elif category in {"receipt", "github", "calendar", "notification"}:
         level, action, conf = "proceed_and_notify", "label", 0.74
         label = category
@@ -187,7 +227,7 @@ def heuristic_classify(
         why = f"{category} mail that wants a response. Draft and wait."
 
     pref = _best_pref(preferences or [], domain, category)
-    if pref and pref.get("confidence", 0) >= 0.55 and not _urgent(blob, subject):
+    if pref and pref.get("confidence", 0) >= 0.55 and not _urgent(blob, subject, sender):
         preferred = pref["preferred_autonomy"]
         if preferred != level:
             why += f" Preference on {pref.get('pattern_value')} pulls toward {preferred}."
