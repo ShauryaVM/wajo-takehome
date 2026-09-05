@@ -1,10 +1,20 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
+from app.migrate import upgrade_head
 from app.routers import auth as auth_router
 
-app = FastAPI(title="Steward", docs_url="/docs")
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    upgrade_head()
+    yield
+
+
+app = FastAPI(title="Steward", docs_url="/docs", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
