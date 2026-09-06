@@ -25,33 +25,44 @@ DECISION_SCHEMA: dict[str, Any] = {
     ],
 }
 
+SAFETY_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "money": {"type": "string", "enum": ["none", "ask_first", "escalate"]},
+        "prompt_injection": {"type": "string", "enum": ["none", "ask_first", "escalate"]},
+        "reason": {"type": "string"},
+    },
+    "required": ["money", "prompt_injection", "reason"],
+}
+
 
 class LlmUnavailable(RuntimeError):
     pass
 
 
 def llm_configured() -> bool:
-    if settings.llm_provider == "anthropic":
-        return bool(settings.anthropic_api_key)
-    if settings.llm_provider == "openai":
-        return bool(settings.openai_api_key)
     return bool(settings.openai_api_key or settings.anthropic_api_key)
 
 
 def complete_decision(system: str, user: str) -> dict[str, Any]:
+    return complete_json(system, user, DECISION_SCHEMA, "autonomy_decision")
+
+
+def complete_json(system: str, user: str, schema: dict[str, Any], name: str) -> dict[str, Any]:
     provider = (settings.llm_provider or "openai").lower()
     if provider == "anthropic" and settings.anthropic_api_key:
-        return _anthropic(system, user)
+        return _anthropic(system, user, schema, name)
     if provider == "openai" and settings.openai_api_key:
-        return _openai(system, user)
+        return _openai(system, user, schema, name)
     if settings.openai_api_key:
-        return _openai(system, user)
+        return _openai(system, user, schema, name)
     if settings.anthropic_api_key:
-        return _anthropic(system, user)
+        return _anthropic(system, user, schema, name)
     raise LlmUnavailable("no LLM key in env")
 
 
-def _openai(system: str, user: str) -> dict[str, Any]:
+def _openai(system: str, user: str, schema: dict[str, Any], name: str) -> dict[str, Any]:
     from openai import OpenAI
 
     client = OpenAI(api_key=settings.openai_api_key)
@@ -65,9 +76,9 @@ def _openai(system: str, user: str) -> dict[str, Any]:
         response_format={
             "type": "json_schema",
             "json_schema": {
-                "name": "autonomy_decision",
+                "name": name,
                 "strict": True,
-                "schema": DECISION_SCHEMA,
+                "schema": schema,
             },
         },
     )
@@ -75,7 +86,7 @@ def _openai(system: str, user: str) -> dict[str, Any]:
     return json.loads(content)
 
 
-def _anthropic(system: str, user: str) -> dict[str, Any]:
+def _anthropic(system: str, user: str, schema: dict[str, Any], name: str) -> dict[str, Any]:
     from anthropic import Anthropic
 
     client = Anthropic(api_key=settings.anthropic_api_key)
@@ -87,14 +98,14 @@ def _anthropic(system: str, user: str) -> dict[str, Any]:
         messages=[{"role": "user", "content": user}],
         tools=[
             {
-                "name": "record_decision",
-                "description": "Store the autonomy decision for this email.",
-                "input_schema": DECISION_SCHEMA,
+                "name": name,
+                "description": "Record the structured result.",
+                "input_schema": schema,
             }
         ],
-        tool_choice={"type": "tool", "name": "record_decision"},
+        tool_choice={"type": "tool", "name": name},
     )
     for block in resp.content:
-        if getattr(block, "type", None) == "tool_use" and block.name == "record_decision":
+        if getattr(block, "type", None) == "tool_use" and block.name == name:
             return dict(block.input)
-    raise RuntimeError("anthropic did not return a decision tool call")
+    raise RuntimeError("anthropic did not return a structured tool call")
