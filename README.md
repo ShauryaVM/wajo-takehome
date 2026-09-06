@@ -71,7 +71,7 @@ Prints accuracy, ask-rate, and safety violations. Writes `eval/results/` and `ev
 
 ## Connect your Gmail
 
-Steward is local. It is not a public SaaS, so Google will not verify an OAuth app for it. Use an App Password over IMAP. That path does not need Google Cloud or app verification.
+Steward is local. Use an App Password over IMAP. That path does not need Google Cloud or app verification.
 
 ### 1. Enable IMAP in Gmail
 
@@ -103,20 +103,4 @@ Workspace / Advanced Protection accounts sometimes hide App passwords. Use a per
 Steward encrypts the password (Fernet) and stores it in Postgres. The worker polls about every 45 seconds. First connect pulls the latest ~100 messages and runs them through the existing safety floor. Send/reply still ask first. Delete, forward, money, and injection still escalate.
 
 Do not put the app password in `.env` or commit it.
-
-## Gmail API OAuth (optional)
-
-Only needed if App passwords are blocked. This is an unverified local client. Only Google accounts listed as test users can connect.
-
-1. [Google Cloud Console](https://console.cloud.google.com/) -> create a project (or pick one).
-2. Enable the Gmail API.
-3. APIs & Services -> OAuth consent screen. User type: External. Publishing status: Testing. Add your Gmail as a test user.
-4. Credentials -> Create credentials -> OAuth client ID -> Web application.
-   - Authorized JavaScript origins: `http://localhost:3000` and `http://localhost:8000`
-   - Authorized redirect URI: `http://localhost:8000/accounts/gmail/callback`
-5. Put `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `.env`. Recreate api and worker: `docker compose up -d --no-build --force-recreate api worker`.
-6. Settings -> Connect Gmail with Google.
-
-`OAUTHLIB_INSECURE_TRANSPORT=1` is set in docker compose so the HTTP localhost callback works. Tokens are encrypted in the database. Reconnecting the same address updates them instead of duplicating the mailbox.
-
 If Google shows "this app isn't verified", that is expected. Continue only on an account you added as a test user.
