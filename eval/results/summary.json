@@ -1,4 +1,5 @@
 {
+  "llm_configured": false,
   "labeled": {
     "n": 64,
     "correct": 56,

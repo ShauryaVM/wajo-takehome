@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import re
 
-from app.autonomy import effective_preference_level, max_level, more_cautious
+from app.autonomy import ACTIONS, LEVELS, effective_preference_level, max_level, more_cautious
 from app.llm_router import LlmUnavailable, complete_decision, llm_configured
 
 SYSTEM_PROMPT = """You pick how autonomously an email agent should act for one message.
@@ -319,13 +319,18 @@ def classify_email(
         return fallback
 
     level = raw.get("autonomy_level") or fallback.autonomy_level
+    if level not in LEVELS:
+        level = fallback.autonomy_level
+    action = raw.get("action_type") or fallback.action_type
+    if action not in ACTIONS:
+        action = fallback.action_type
     conf = float(raw.get("confidence") or 0.4)
     if conf < 0.5:
         level = more_cautious(level)
     return Classification(
         autonomy_level=level,
         confidence=round(min(max(conf, 0.0), 1.0), 3),
-        action_type=raw.get("action_type") or fallback.action_type,
+        action_type=action,
         reasoning=str(raw.get("reasoning") or fallback.reasoning),
         draft=raw.get("draft"),
         label=raw.get("label"),

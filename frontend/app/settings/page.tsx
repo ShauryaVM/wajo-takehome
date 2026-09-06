@@ -331,8 +331,8 @@ export default function SettingsPage() {
                 <div>Anthropic key: {settings.llm.anthropic_configured ? "set" : "missing"} ({settings.llm.anthropic_model})</div>
                 <div>
                   {settings.llm.ready
-                    ? "Classifier will call the configured model."
-                    : "No key set. Classifier uses the local heuristic. Fine for the demo and eval."}
+                    ? "Classifier calls the configured model. Guard regex still always runs; the model may only raise money or injection."
+                    : "No key set. Classifier uses the local heuristic. Guard is regex-only. Fine for the demo and eval."}
                 </div>
               </dl>
             ) : null}

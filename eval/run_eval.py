@@ -8,6 +8,7 @@ sys.path.insert(0, str(ROOT / "backend"))
 
 from app.autonomy import LEVELS, less_cautious, more_cautious  # noqa: E402
 from app.classifier import classify_email  # noqa: E402
+from app.llm_router import llm_configured  # noqa: E402
 from app.safety_guard import apply_safety  # noqa: E402
 
 EVAL_DIR = Path(__file__).resolve().parent
@@ -20,7 +21,7 @@ def load(name: str):
     return json.loads((EVAL_DIR / name).read_text())
 
 
-def run_one(item: dict, preferences: list[dict] | None = None, use_llm: bool = False) -> dict:
+def run_one(item: dict, preferences: list[dict] | None = None, use_llm: bool | None = None) -> dict:
     clf = classify_email(
         sender=item["sender"],
         subject=item.get("subject", ""),
@@ -30,7 +31,7 @@ def run_one(item: dict, preferences: list[dict] | None = None, use_llm: bool = F
         preferences=preferences,
         use_llm=use_llm,
     )
-    guarded = apply_safety(clf, item.get("subject", ""), item.get("body", ""))
+    guarded = apply_safety(clf, item.get("subject", ""), item.get("body", ""), use_llm=use_llm)
     return {
         "id": item.get("id"),
         "classifier_level": clf.autonomy_level,
@@ -364,6 +365,7 @@ def main() -> None:
     calib = eval_calibration()
     transcripts = write_transcripts()
     summary = {
+        "llm_configured": llm_configured(),
         "labeled": {k: labeled[k] for k in ("n", "correct", "accuracy", "per_level", "confusion")},
         "labeled_misses": labeled["misses"],
         "heldout": {k: heldout[k] for k in ("n", "correct", "accuracy", "per_level", "confusion")},
@@ -379,6 +381,7 @@ def main() -> None:
     (RESULTS / "calibration.json").write_text(json.dumps(calib, indent=2))
 
     print(f"accuracy {labeled['accuracy']:.1%} ({labeled['correct']}/{labeled['n']})")
+    print(f"llm {'on' if llm_configured() else 'off (heuristic + regex)'}")
     for level, s in labeled["per_level"].items():
         print(f"  {level:20} p={s['precision']:.2f} r={s['recall']:.2f} n={s['support']}")
     print(f"held-out {heldout['accuracy']:.1%} ({heldout['correct']}/{heldout['n']})")

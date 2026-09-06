@@ -82,4 +82,4 @@ PYTHONPATH=backend python eval/run_eval.py
 
 Prints accuracy, ask-rate, and safety violations. Writes `eval/results/` and `eval/transcripts/`. Design notes: [DESIGN.md](DESIGN.md).
 
-No LLM key is required. If `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` is set, the classifier uses that instead of the heuristic. The safety guard stays the same.
+No LLM key is required. If `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` is set, structured LLM classify is the primary decision and the heuristic is the fallback. The safety guard still runs after. Regex is the hard floor; an LLM second pass may only raise money or injection.
