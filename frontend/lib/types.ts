@@ -59,4 +59,5 @@ export type ApprovalItem = {
     body_text: string;
     received_at: string;
   };
+  feedback: { id: number; feedback_type: string; user_comment: string | null; created_at: string }[];
 };

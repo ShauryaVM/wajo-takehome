@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-import re
 
 import httpx
 import msal
@@ -7,6 +6,7 @@ import msal
 from app.config import settings
 from app.crypto import decrypt_json, encrypt_json
 from app.providers.base import FetchedMessage, SendPayload
+from app.textutil import html_to_text
 
 GRAPH = "https://graph.microsoft.com/v1.0"
 SCOPES = ["Mail.ReadWrite", "Mail.Send", "offline_access", "User.Read"]
@@ -91,7 +91,7 @@ class OutlookProvider:
             body_obj = row.get("body") or {}
             body_text = body_obj.get("content") or ""
             if (body_obj.get("contentType") or "").lower() == "html":
-                body_text = re.sub(r"<[^>]+>", " ", body_text)
+                body_text = html_to_text(body_text)
             headers = {h["name"].lower(): h["value"] for h in row.get("internetMessageHeaders") or []}
             out.append(
                 FetchedMessage(

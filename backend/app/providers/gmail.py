@@ -3,7 +3,6 @@ import base64
 import email as emaillib
 from email.mime.text import MIMEText
 from email.utils import parsedate_to_datetime
-import re
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -12,6 +11,7 @@ from googleapiclient.discovery import build
 from app.config import settings
 from app.crypto import decrypt_json, encrypt_json
 from app.providers.base import FetchedMessage, SendPayload
+from app.textutil import html_to_text
 
 GMAIL_SCOPES = [
     "https://www.googleapis.com/auth/gmail.modify",
@@ -73,7 +73,7 @@ def _walk_parts(payload: dict) -> tuple[str, str | None]:
         text = base64.urlsafe_b64decode(data.encode()).decode("utf-8", errors="replace")
     elif data and mime.startswith("text/html") and not text:
         html = base64.urlsafe_b64decode(data.encode()).decode("utf-8", errors="replace")
-        text = re.sub(r"<[^>]+>", " ", html)
+        text = html_to_text(html)
     for part in payload.get("parts") or []:
         nested, nested_unsub = _walk_parts(part)
         if nested and not text:

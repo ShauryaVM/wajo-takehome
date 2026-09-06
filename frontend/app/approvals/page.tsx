@@ -6,6 +6,7 @@ import DecisionBadge from "@/components/DecisionBadge";
 import FeedbackButtons from "@/components/FeedbackButtons";
 import { api } from "@/lib/api";
 import type { ApprovalItem } from "@/lib/types";
+import { plainText } from "@/lib/plain";
 
 function fromName(sender: string) {
   const angle = sender.indexOf("<");
@@ -42,6 +43,7 @@ export default function ApprovalsPage() {
             {items?.map((item) => {
               const d = item.decision;
               const draft = d.proposed_action?.draft;
+              const types = (item.feedback || []).map((f) => f.feedback_type);
               return (
                 <article key={d.id} className="rounded-lg border border-ink-200 bg-white p-5">
                   <div className="flex items-start justify-between gap-3">
@@ -52,7 +54,7 @@ export default function ApprovalsPage() {
                     <DecisionBadge level={d.autonomy_level} status={d.status} />
                   </div>
                   <pre className="mt-4 max-h-40 overflow-y-auto whitespace-pre-wrap font-sans text-sm leading-6 text-ink-700">
-                    {item.email.body_text}
+                    {plainText(item.email.body_text)}
                   </pre>
                   <p className="mt-3 text-sm text-ink-600">{d.reasoning}</p>
                   {typeof draft === "string" && draft ? (
@@ -79,7 +81,7 @@ export default function ApprovalsPage() {
                     >
                       Dismiss
                     </button>
-                    <FeedbackButtons decisionId={d.id} onDone={load} />
+                    <FeedbackButtons decisionId={d.id} existing={types} onDone={load} />
                   </div>
                 </article>
               );

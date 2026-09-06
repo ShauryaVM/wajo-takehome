@@ -47,11 +47,14 @@ def analytics(db: Session = Depends(get_db), user: User = Depends(current_user))
     by_level: dict[str, int] = {}
     by_status: dict[str, int] = {}
     safety_hits = 0
+    pending = 0
     for d in decisions:
         by_level[d.autonomy_level] = by_level.get(d.autonomy_level, 0) + 1
         by_status[d.status] = by_status.get(d.status, 0) + 1
         if d.safety_hit:
             safety_hits += 1
+        if d.status in {"pending", "escalated"} and d.autonomy_level in ASKISH:
+            pending += 1
 
     fbs = (
         db.query(Feedback)
@@ -98,7 +101,7 @@ def analytics(db: Session = Depends(get_db), user: User = Depends(current_user))
             "decisions": len(decisions),
             "safety_hits": safety_hits,
             "overrides": by_status.get("overridden", 0),
-            "pending": by_status.get("pending", 0) + by_status.get("escalated", 0),
+            "pending": pending,
         },
         "by_level": [{"level": k, "n": v} for k, v in by_level.items()],
         "by_status": [{"status": k, "n": v} for k, v in by_status.items()],

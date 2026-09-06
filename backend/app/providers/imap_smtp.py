@@ -10,6 +10,7 @@ import uuid
 
 from app.crypto import decrypt_json
 from app.providers.base import FetchedMessage, SendPayload
+from app.textutil import html_to_text
 
 IMAP_TIMEOUT = 20
 SMTP_TIMEOUT = 20
@@ -17,6 +18,45 @@ SMTP_TIMEOUT = 20
 
 def normalize_secret(password: str) -> str:
     return (password or "").replace(" ", "").replace("\t", "").strip()
+
+
+def _quote_mbox(name: str) -> str:
+    if not name:
+        return '""'
+    if name.startswith('"') and name.endswith('"'):
+        return name
+    return '"' + name.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def _decode_part(part: Message) -> str:
+    payload = part.get_payload(decode=True) or b""
+    return payload.decode(part.get_content_charset() or "utf-8", errors="replace")
+
+
+def _body_of(msg: Message) -> str:
+    plain = ""
+    html = ""
+    if msg.is_multipart():
+        for part in msg.walk():
+            ctype = part.get_content_type()
+            disp = str(part.get("Content-Disposition") or "")
+            if "attachment" in disp:
+                continue
+            if ctype == "text/plain" and not plain:
+                plain = _decode_part(part)
+            elif ctype == "text/html" and not html:
+                html = _decode_part(part)
+    else:
+        raw = _decode_part(msg)
+        if msg.get_content_type() == "text/html":
+            html = raw
+        else:
+            plain = raw
+    if plain.strip():
+        if "<html" in plain.lower() or "<!doctype" in plain.lower():
+            return html_to_text(plain)
+        return plain.strip()
+    return html_to_text(html)
 
 
 def _decode_hdr(value: str | None) -> str:
@@ -30,19 +70,6 @@ def _decode_hdr(value: str | None) -> str:
         else:
             out.append(chunk)
     return "".join(out)
-
-
-def _body_of(msg: Message) -> str:
-    if msg.is_multipart():
-        for part in msg.walk():
-            ctype = part.get_content_type()
-            disp = str(part.get("Content-Disposition") or "")
-            if ctype == "text/plain" and "attachment" not in disp:
-                payload = part.get_payload(decode=True) or b""
-                return payload.decode(part.get_content_charset() or "utf-8", errors="replace")
-        return ""
-    payload = msg.get_payload(decode=True) or b""
-    return payload.decode(msg.get_content_charset() or "utf-8", errors="replace")
 
 
 def _fetch_raw(fetched) -> bytes | None:
@@ -276,8 +303,13 @@ class ImapSmtpProvider:
             conn.select("INBOX")
             dest = self._pick_folder(conn, ["[Gmail]/All Mail", "Archive", "Archives", "Archived"])
             if dest:
-                conn.uid("COPY", message_id, dest)
-            conn.uid("STORE", message_id, "+FLAGS", "(\\Deleted)")
+                try:
+                    conn.uid("COPY", message_id, _quote_mbox(dest))
+                except imaplib.IMAP4.error:
+                    pass
+            typ, _ = conn.uid("STORE", message_id, "+FLAGS", "(\\Deleted)")
+            if typ != "OK":
+                raise RuntimeError(f"could not archive {message_id}")
             conn.expunge()
         finally:
             conn.logout()
@@ -288,9 +320,9 @@ class ImapSmtpProvider:
             conn.select("INBOX")
             dest = self._pick_folder(conn, [label])
             if not dest:
-                conn.create(label)
+                conn.create(_quote_mbox(label))
                 dest = label
-            conn.uid("COPY", message_id, dest)
+            conn.uid("COPY", message_id, _quote_mbox(dest))
         finally:
             conn.logout()
 
@@ -317,7 +349,7 @@ class ImapSmtpProvider:
         try:
             dest = self._pick_folder(conn, ["[Gmail]/Drafts", "Drafts", "INBOX.Drafts"])
             if dest:
-                conn.append(dest, "\\Draft", None, msg.as_bytes())
+                conn.append(_quote_mbox(dest), "\\Draft", None, msg.as_bytes())
         finally:
             conn.logout()
         return draft_id

@@ -3,6 +3,7 @@ import logging
 
 from sqlalchemy.orm import Session
 
+from app.action_engine import retry_pending_autonomous
 from app.models import Email, EmailAccount
 from app.providers.router import persist_refreshed_tokens, provider_for
 
@@ -66,6 +67,10 @@ def sync_account(db: Session, account: EmailAccount, on_new=None) -> int:
                 log.exception("classify failed for email %s", row.id)
     persist_refreshed_tokens(account, provider)
     account.last_sync_at = datetime.now(timezone.utc)
+    try:
+        retry_pending_autonomous(db, account)
+    except Exception:
+        log.exception("retry pending actions failed for account %s", account.id)
     return created
 
 

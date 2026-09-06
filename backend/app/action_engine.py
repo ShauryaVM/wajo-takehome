@@ -88,6 +88,7 @@ def decide_and_act(
         email.subject,
         email.body_text,
         extra_floors=extra_floors(db, account.user_id, email.sender, clf.action_type),
+        use_llm=use_llm,
     )
 
     proposed = {
@@ -165,3 +166,40 @@ def approve_and_run(db: Session, decision: AgentDecision, account: EmailAccount,
     decision.status = "executed"
     decision.executed_at = datetime.now(timezone.utc)
     return decision
+
+
+def retry_pending_autonomous(db: Session, account: EmailAccount) -> int:
+    rows = (
+        db.query(AgentDecision, Email)
+        .join(Email, Email.id == AgentDecision.email_id)
+        .filter(
+            Email.account_id == account.id,
+            AgentDecision.status == "pending",
+            AgentDecision.autonomy_level.in_(["proceed_silently", "proceed_and_notify"]),
+            AgentDecision.action_type.in_(["archive", "label"]),
+        )
+        .all()
+    )
+    n = 0
+    for decision, email in rows:
+        clf = Classification(
+            autonomy_level=decision.autonomy_level,
+            confidence=decision.confidence,
+            action_type=decision.action_type,
+            reasoning=decision.reasoning,
+            draft=(decision.proposed_action or {}).get("draft"),
+            label=(decision.proposed_action or {}).get("label"),
+            category=(decision.proposed_action or {}).get("category") or "other",
+            used_llm=bool((decision.proposed_action or {}).get("used_llm")),
+        )
+        try:
+            result = run_action(account, email, decision.action_type, clf)
+            payload = dict(decision.proposed_action or {})
+            payload.update(result)
+            decision.proposed_action = payload
+            decision.status = "executed"
+            decision.executed_at = datetime.now(timezone.utc)
+            n += 1
+        except Exception:
+            log.exception("retry failed on email %s", email.id)
+    return n

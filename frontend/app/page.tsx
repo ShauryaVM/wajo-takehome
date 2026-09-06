@@ -6,6 +6,7 @@ import DecisionBadge from "@/components/DecisionBadge";
 import FeedbackButtons from "@/components/FeedbackButtons";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/cn";
+import { plainText } from "@/lib/plain";
 import type { EmailDetail, EmailListItem } from "@/lib/types";
 
 function fromName(sender: string) {
@@ -82,7 +83,7 @@ export default function InboxPage() {
                     <span className="shrink-0 text-[11px] text-ink-400">{relative(e.received_at)}</span>
                   </div>
                   <p className="mt-0.5 truncate text-sm text-ink-800">{e.subject || "(no subject)"}</p>
-                  <p className="mt-0.5 truncate text-xs text-ink-400">{e.preview}</p>
+                  <p className="mt-0.5 truncate text-xs text-ink-400">{plainText(e.preview)}</p>
                   <div className="mt-1.5">
                     <DecisionBadge level={e.decision?.autonomy_level} status={e.decision?.status} />
                   </div>
@@ -108,9 +109,9 @@ export default function InboxPage() {
               </p>
               <p className="mt-1 text-xs text-ink-400">{new Date(selected.received_at).toLocaleString()}</p>
               <pre className="mt-8 whitespace-pre-wrap font-sans text-sm leading-6 text-ink-800">
-                {selected.body_text}
+                {plainText(selected.body_text)}
               </pre>
-                  {selected.decision ? (
+              {selected.decision ? (
                 <section className="mt-10 rounded-lg border border-ink-200 bg-ink-50 p-4">
                   <p className="text-xs uppercase tracking-wide text-ink-400">Agent</p>
                   <p className="mt-2 text-sm text-ink-800">{selected.decision.reasoning}</p>

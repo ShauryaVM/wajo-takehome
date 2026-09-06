@@ -151,6 +151,7 @@ def approvals(db: Session = Depends(get_db), user: User = Depends(current_user))
             Email.user_id == user.id,
             Email.account_id.in_(ids),
             AgentDecision.status.in_(["pending", "escalated"]),
+            AgentDecision.autonomy_level.in_(["ask_first", "escalate"]),
         )
         .order_by(AgentDecision.created_at.desc())
         .all()
@@ -166,6 +167,10 @@ def approvals(db: Session = Depends(get_db), user: User = Depends(current_user))
                 "body_text": e.body_text,
                 "received_at": e.received_at.isoformat(),
             },
+            "feedback": [
+                FeedbackOut.model_validate(f).model_dump(mode="json")
+                for f in db.query(Feedback).filter(Feedback.decision_id == d.id).all()
+            ],
         }
         for d, e in rows
     ]
