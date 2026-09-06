@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+import logging
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,6 +14,8 @@ from app.routers import mail as mail_router
 from app.routers import settings as settings_router
 from app.seed import seed_if_empty
 
+log = logging.getLogger("steward.api")
+
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
@@ -21,6 +24,10 @@ async def lifespan(_app: FastAPI):
     try:
         seed_if_empty(db)
         db.commit()
+    except Exception:
+        db.rollback()
+        log.exception("seed failed")
+        raise
     finally:
         db.close()
     yield

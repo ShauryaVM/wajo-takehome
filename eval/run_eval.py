@@ -4,7 +4,12 @@ import json
 import sys
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "backend"))
+for _candidate in (ROOT / "backend", Path("/app")):
+    if (_candidate / "app").is_dir():
+        sys.path.insert(0, str(_candidate))
+        break
+else:
+    sys.path.insert(0, str(ROOT / "backend"))
 
 from app.autonomy import LEVELS, less_cautious, more_cautious  # noqa: E402
 from app.classifier import classify_email  # noqa: E402

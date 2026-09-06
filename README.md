@@ -6,19 +6,68 @@ This is meant to be run on your machine. There is no hosted signup.
 
 ## Run
 
+Docker with the Compose plugin. From the repo root:
+
 ```bash
 cp .env.example .env
-docker compose up --build
+docker compose up --build --wait
 ```
 
-Then open [http://localhost:3000](http://localhost:3000).
+`--wait` returns when Postgres, Redis, the API (migrations + seed), and the web app are healthy.
+
+Open http://localhost:3000
 
 Login:
 
 - email: `you@local`
 - password: `steward`
 
-The default inbox is seeded fixtures. You do not need Gmail or an LLM key to click around.
+No Gmail or LLM key is required to click around. The inbox is seeded fixtures on first boot.
+
+If port 3000 is already in use, Compose fails with a bind error. Free it:
+
+```bash
+lsof -nP -iTCP:3000 -sTCP:LISTEN
+```
+
+Then quit that process, or change the frontend mapping in `docker-compose.yml` to `"3001:3000"`, set `APP_ORIGIN=http://localhost:3001` in `.env`, and open http://localhost:3001 instead.
+
+### Optional LLM keys
+
+Put a key in `.env`. Never commit `.env`.
+
+```
+OPENAI_API_KEY=
+ANTHROPIC_API_KEY=
+GEMINI_API_KEY=
+LLM_PROVIDER=openai
+```
+
+`LLM_PROVIDER` is `openai`, `anthropic`, or `gemini`. If that provider's key is empty, the first set key wins in that same order. Recreate api and worker so they reread `.env` (no image rebuild):
+
+```bash
+docker compose up -d --no-build --force-recreate api worker
+```
+
+Regex is still the hard safety floor. An LLM second pass may only raise money or injection.
+
+### Eval
+
+Stack already up:
+
+```bash
+docker compose exec api python /eval/run_eval.py
+```
+
+Prints accuracy, ask-rate, and safety violations. Writes `eval/results/` and `eval/transcripts/`. Design notes: [DESIGN.md](DESIGN.md). No LLM key is required. If a key is set in `.env`, structured LLM classify is primary and the heuristic is the fallback.
+
+### If it failed
+
+- Docker daemon: start Docker Desktop (or your engine) and wait until it is idle. `docker info` should work, then retry compose.
+- Compose missing: `docker compose version` should print a version. Install Docker Desktop, or the Compose plugin. The old `docker-compose` binary is not what the commands above use.
+- Port in use: `Bind for 0.0.0.0:3000 failed` (or 8000 / 5432 / 6379). Free the port or change the host side of that mapping in `docker-compose.yml`. If you change 3000, set `APP_ORIGIN` to the URL you actually open.
+- `env file .env not found`: run `cp .env.example .env` from the repo root.
+- Empty inbox after a broken first boot: `docker compose down -v` then `docker compose up --build --wait`. `-v` wipes the local Postgres volume.
 
 ## Connect your Gmail
 
@@ -65,23 +114,9 @@ Only needed if App passwords are blocked. This is an unverified local client. On
 4. Credentials -> Create credentials -> OAuth client ID -> Web application.
    - Authorized JavaScript origins: `http://localhost:3000` and `http://localhost:8000`
    - Authorized redirect URI: `http://localhost:8000/accounts/gmail/callback`
-5. Put `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `.env`. Restart `docker compose up`.
+5. Put `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `.env`. Recreate api and worker: `docker compose up -d --no-build --force-recreate api worker`.
 6. Settings -> Connect Gmail with Google.
 
 `OAUTHLIB_INSECURE_TRANSPORT=1` is set in docker compose so the HTTP localhost callback works. Tokens are encrypted in the database. Reconnecting the same address updates them instead of duplicating the mailbox.
 
 If Google shows "this app isn't verified", that is expected. Continue only on an account you added as a test user.
-
-## Eval
-
-From the repo root, with backend deps installed:
-
-```bash
-PYTHONPATH=backend python eval/run_eval.py
-```
-
-Prints accuracy, ask-rate, and safety violations. Writes `eval/results/` and `eval/transcripts/`. Design notes: [DESIGN.md](DESIGN.md).
-
-No LLM key is required. If `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, or `GEMINI_API_KEY` is set, structured LLM classify is the primary decision and the heuristic is the fallback. The safety guard still runs after. Regex is the hard floor; an LLM second pass may only raise money or injection.
-
-`LLM_PROVIDER=openai|anthropic|gemini` picks the primary when more than one key is set. If that provider's key is missing, the first set key wins in that same order. `GEMINI_API_KEY` is the Gemini key; Gmail OAuth still uses `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`. Docker Compose reads these from `.env`.

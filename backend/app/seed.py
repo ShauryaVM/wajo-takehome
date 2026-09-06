@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import json
+import logging
 
 from sqlalchemy.orm import Session
 
@@ -11,6 +12,7 @@ from app.models import AgentDecision, Email, EmailAccount, Feedback, Preference,
 from app.routers.settings import ensure_system_rules
 
 HISTORY_START = datetime(2026, 8, 23, 9, 0, tzinfo=timezone.utc)
+log = logging.getLogger("steward.seed")
 
 
 def _user(db: Session) -> User:
@@ -284,7 +286,11 @@ def _history(db: Session, user: User, acct: EmailAccount) -> None:
 
 def _fixture_inbox(db: Session, user: User, acct: EmailAccount) -> None:
     path = Path(__file__).resolve().parent / "providers" / "fixtures" / "inbox.json"
+    if not path.is_file():
+        raise FileNotFoundError(f"fixture inbox missing: {path}")
     rows = json.loads(path.read_text())
+    if not rows:
+        raise RuntimeError("fixture inbox.json is empty")
     for row in rows:
         received = datetime.fromisoformat(row["received_at"])
         _add_email(
@@ -307,7 +313,7 @@ def _fixture_inbox(db: Session, user: User, acct: EmailAccount) -> None:
         has = db.query(AgentDecision).filter(AgentDecision.email_id == email.id).first()
         if has:
             continue
-        decide_and_act(db, acct, email)
+        decide_and_act(db, acct, email, use_llm=False)
 
 
 def _repair_fixture_agent(db: Session, acct: EmailAccount) -> None:
@@ -331,7 +337,7 @@ def _repair_fixture_agent(db: Session, acct: EmailAccount) -> None:
             db.query(Feedback).filter(Feedback.decision_id == d.id).delete()
             db.delete(d)
         db.flush()
-        decide_and_act(db, acct, email)
+        decide_and_act(db, acct, email, use_llm=False)
 
 
 def _prefs(db: Session, user: User) -> None:
@@ -377,3 +383,8 @@ def seed_if_empty(db: Session) -> None:
     _fixture_inbox(db, user, acct)
     _repair_fixture_agent(db, acct)
     _prefs(db, user)
+    n = db.query(Email).filter(Email.account_id == acct.id).count()
+    if n == 0:
+        raise RuntimeError("seed produced no emails")
+    log.info("seeded %s emails for %s", n, user.email)
+    print(f"seeded {n} emails for {user.email}", flush=True)
