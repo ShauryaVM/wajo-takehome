@@ -28,9 +28,11 @@ type Settings = {
     provider: string;
     openai_configured: boolean;
     anthropic_configured: boolean;
+    gemini_configured: boolean;
     ready: boolean;
     openai_model: string;
     anthropic_model: string;
+    gemini_model: string;
   };
   safety_rules: Rule[];
   user: { email: string };
@@ -329,6 +331,7 @@ export default function SettingsPage() {
                 <div>Provider: {settings.llm.provider}</div>
                 <div>OpenAI key: {settings.llm.openai_configured ? "set" : "missing"} ({settings.llm.openai_model})</div>
                 <div>Anthropic key: {settings.llm.anthropic_configured ? "set" : "missing"} ({settings.llm.anthropic_model})</div>
+                <div>Gemini key: {settings.llm.gemini_configured ? "set" : "missing"} ({settings.llm.gemini_model})</div>
                 <div>
                   {settings.llm.ready
                     ? "Classifier calls the configured model. Guard regex still always runs; the model may only raise money or injection."

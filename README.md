@@ -82,4 +82,6 @@ PYTHONPATH=backend python eval/run_eval.py
 
 Prints accuracy, ask-rate, and safety violations. Writes `eval/results/` and `eval/transcripts/`. Design notes: [DESIGN.md](DESIGN.md).
 
-No LLM key is required. If `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` is set, structured LLM classify is the primary decision and the heuristic is the fallback. The safety guard still runs after. Regex is the hard floor; an LLM second pass may only raise money or injection.
+No LLM key is required. If `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, or `GEMINI_API_KEY` is set, structured LLM classify is the primary decision and the heuristic is the fallback. The safety guard still runs after. Regex is the hard floor; an LLM second pass may only raise money or injection.
+
+`LLM_PROVIDER=openai|anthropic|gemini` picks the primary when more than one key is set. If that provider's key is missing, the first set key wins in that same order. `GEMINI_API_KEY` is the Gemini key; Gmail OAuth still uses `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`. Docker Compose reads these from `.env`.

@@ -18,8 +18,10 @@ class Settings(BaseSettings):
     llm_provider: str = "openai"
     openai_api_key: str = ""
     anthropic_api_key: str = ""
+    gemini_api_key: str = ""
     openai_model: str = "gpt-4o-mini"
     anthropic_model: str = "claude-sonnet-4-5"
+    gemini_model: str = "gemini-2.5-flash"
 
     google_client_id: str = ""
     google_client_secret: str = ""

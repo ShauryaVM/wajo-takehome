@@ -41,8 +41,31 @@ class LlmUnavailable(RuntimeError):
     pass
 
 
+_PROVIDER_ORDER = ("openai", "anthropic", "gemini")
+_GEMINI_OPENAI_BASE = "https://generativelanguage.googleapis.com/v1beta/openai/"
+
+
+def _provider_keys() -> dict[str, bool]:
+    return {
+        "openai": bool(settings.openai_api_key),
+        "anthropic": bool(settings.anthropic_api_key),
+        "gemini": bool(settings.gemini_api_key),
+    }
+
+
+def resolve_llm_provider() -> str | None:
+    requested = (settings.llm_provider or "").strip().lower()
+    keyed = _provider_keys()
+    if requested in keyed and keyed[requested]:
+        return requested
+    for name in _PROVIDER_ORDER:
+        if keyed[name]:
+            return name
+    return None
+
+
 def llm_configured() -> bool:
-    return bool(settings.openai_api_key or settings.anthropic_api_key)
+    return resolve_llm_provider() is not None
 
 
 def complete_decision(system: str, user: str) -> dict[str, Any]:
@@ -50,15 +73,13 @@ def complete_decision(system: str, user: str) -> dict[str, Any]:
 
 
 def complete_json(system: str, user: str, schema: dict[str, Any], name: str) -> dict[str, Any]:
-    provider = (settings.llm_provider or "openai").lower()
-    if provider == "anthropic" and settings.anthropic_api_key:
+    provider = resolve_llm_provider()
+    if provider == "anthropic":
         return _anthropic(system, user, schema, name)
-    if provider == "openai" and settings.openai_api_key:
+    if provider == "gemini":
+        return _gemini(system, user, schema, name)
+    if provider == "openai":
         return _openai(system, user, schema, name)
-    if settings.openai_api_key:
-        return _openai(system, user, schema, name)
-    if settings.anthropic_api_key:
-        return _anthropic(system, user, schema, name)
     raise LlmUnavailable("no LLM key in env")
 
 
@@ -109,3 +130,27 @@ def _anthropic(system: str, user: str, schema: dict[str, Any], name: str) -> dic
         if getattr(block, "type", None) == "tool_use" and block.name == name:
             return dict(block.input)
     raise RuntimeError("anthropic did not return a structured tool call")
+
+
+def _gemini(system: str, user: str, schema: dict[str, Any], name: str) -> dict[str, Any]:
+    from openai import OpenAI
+
+    client = OpenAI(api_key=settings.gemini_api_key, base_url=_GEMINI_OPENAI_BASE)
+    resp = client.chat.completions.create(
+        model=settings.gemini_model,
+        temperature=0,
+        messages=[
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
+        ],
+        response_format={
+            "type": "json_schema",
+            "json_schema": {
+                "name": name,
+                "strict": True,
+                "schema": schema,
+            },
+        },
+    )
+    content = resp.choices[0].message.content or "{}"
+    return json.loads(content)

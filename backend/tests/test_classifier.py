@@ -3,17 +3,64 @@ from unittest.mock import patch
 
 from app.classifier import classify_email
 from app.config import settings
-from app.llm_router import LlmUnavailable, llm_configured
+from app.llm_router import LlmUnavailable, complete_json, llm_configured, resolve_llm_provider
 
 
 class LlmConfiguredTests(unittest.TestCase):
     def test_either_key_is_enough(self):
-        with patch.object(settings, "openai_api_key", ""), patch.object(settings, "anthropic_api_key", "sk-ant"):
+        with (
+            patch.object(settings, "openai_api_key", ""),
+            patch.object(settings, "anthropic_api_key", "sk-ant"),
+            patch.object(settings, "gemini_api_key", ""),
+        ):
             self.assertTrue(llm_configured())
-        with patch.object(settings, "openai_api_key", "sk-openai"), patch.object(settings, "anthropic_api_key", ""):
+        with (
+            patch.object(settings, "openai_api_key", "sk-openai"),
+            patch.object(settings, "anthropic_api_key", ""),
+            patch.object(settings, "gemini_api_key", ""),
+        ):
             self.assertTrue(llm_configured())
-        with patch.object(settings, "openai_api_key", ""), patch.object(settings, "anthropic_api_key", ""):
+        with (
+            patch.object(settings, "openai_api_key", ""),
+            patch.object(settings, "anthropic_api_key", ""),
+            patch.object(settings, "gemini_api_key", "gk"),
+        ):
+            self.assertTrue(llm_configured())
+        with (
+            patch.object(settings, "openai_api_key", ""),
+            patch.object(settings, "anthropic_api_key", ""),
+            patch.object(settings, "gemini_api_key", ""),
+        ):
             self.assertFalse(llm_configured())
+
+    def test_explicit_provider_wins_then_key_order(self):
+        with (
+            patch.object(settings, "llm_provider", "gemini"),
+            patch.object(settings, "openai_api_key", "sk-openai"),
+            patch.object(settings, "anthropic_api_key", "sk-ant"),
+            patch.object(settings, "gemini_api_key", "gk"),
+        ):
+            self.assertEqual(resolve_llm_provider(), "gemini")
+        with (
+            patch.object(settings, "llm_provider", "openai"),
+            patch.object(settings, "openai_api_key", ""),
+            patch.object(settings, "anthropic_api_key", ""),
+            patch.object(settings, "gemini_api_key", "gk"),
+        ):
+            self.assertEqual(resolve_llm_provider(), "gemini")
+
+    def test_complete_json_routes_to_gemini(self):
+        with (
+            patch.object(settings, "llm_provider", "gemini"),
+            patch.object(settings, "gemini_api_key", "gk"),
+            patch.object(settings, "openai_api_key", "sk-openai"),
+            patch("app.llm_router._gemini", return_value={"ok": True}) as gem,
+            patch("app.llm_router._openai") as oai,
+        ):
+            out = complete_json("sys", "user", {"type": "object"}, "n")
+        self.assertEqual(out, {"ok": True})
+        gem.assert_called_once()
+        oai.assert_not_called()
 
 
 class ClassifierLlmTests(unittest.TestCase):

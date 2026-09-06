@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.db import get_db
 from app.deps import current_user
-from app.llm_router import llm_configured
+from app.llm_router import llm_configured, resolve_llm_provider
 from app.models import SafetyRule, User
 from app.schemas import SafetyRuleIn, SafetyRuleOut
 
@@ -47,12 +47,14 @@ def get_settings(db: Session = Depends(get_db), user: User = Depends(current_use
     rules = db.query(SafetyRule).filter(SafetyRule.user_id == user.id).order_by(SafetyRule.id).all()
     return {
         "llm": {
-            "provider": settings.llm_provider,
+            "provider": resolve_llm_provider() or (settings.llm_provider or "openai"),
             "openai_configured": bool(settings.openai_api_key),
             "anthropic_configured": bool(settings.anthropic_api_key),
+            "gemini_configured": bool(settings.gemini_api_key),
             "ready": llm_configured(),
             "openai_model": settings.openai_model,
             "anthropic_model": settings.anthropic_model,
+            "gemini_model": settings.gemini_model,
         },
         "safety_rules": [SafetyRuleOut.model_validate(r).model_dump() for r in rules],
         "user": {"email": user.email},
